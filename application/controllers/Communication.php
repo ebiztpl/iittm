@@ -786,6 +786,51 @@ class Communication extends CI_Controller {
 
 	}
 
+	public function calling_data_update()
+	{
+
+
+		$flag = 0;
+		$check = array();
+		$msg = "";
+
+		$data = array(
+			'call_date' => date('Y-m-d', strtotime($_POST['edit_call_date'])),
+			'call_time' => $_POST['edit_call_time'],
+			'mode' => $_POST['edit_mode_id'],
+			'call_action' => $_POST['edit_call_action'],
+			'response_id' => $_POST['edit_response_id'],
+			'correct_email' => $_POST['edit_correct_email'],
+			'correct_mobile' => $_POST['edit_correct_mobile'],
+			'notes' => $_POST['edit_notes'],
+			'tag' => implode(',', $_POST['edit_tags'])
+		);
+
+
+		if (isset($_POST['edit_status']) ? $_POST['edit_status'] : "" == 1) {
+
+			$update = array('status' => 1);
+			$where = "user_id = " . $_POST['edit_user_id'] . " AND assign_id = " . $_POST['edit_assign_id'];
+			$update = $this->db_lib->update('assignment', $update, $where);
+		}
+
+		$where_call = "id = " . $_POST['edit_calling_id'];
+		$calling_update = $this->db_lib->update('calling_data', $data, $where_call);
+		if ($calling_update) {
+			$flag = 1;
+			$msg = "<span style='color:green;'>Response Has been Updated Successfully" . "</span>";
+		}
+
+
+		if ($flag == 1) {
+			$array = array('status' => 1, 'msg' => $msg);
+			echo json_encode($array);
+		} else {
+			$array = array('status' => 0, 'msg' => $msg);
+			echo json_encode($array);
+		}
+	}
+	
 	public function calling_data_save()
 	{
 
