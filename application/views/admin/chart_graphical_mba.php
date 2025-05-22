@@ -209,7 +209,32 @@
               .then(res => res.json())
               .then(data => {
                 console.log("Fetched Data:", data);
-                drawCharts(data);
+
+                const table = data.citychart;
+                if (!table || table.length < 2) {
+                  console.error("Invalid data format");
+                  return;
+                }
+
+                const header = table[0];
+                const years = header.slice(1);
+
+                const transformed = {};
+                years.forEach(y => {
+                  transformed[y] = [];
+                });
+
+                for (let i = 1; i < table.length; i++) {
+                  const row = table[i];
+                  const city = row[0];
+                  for (let j = 1; j < row.length; j++) {
+                    const year = header[j];
+                    const count = parseInt(row[j]) || 0;
+                    transformed[year].push([city, count]);
+                  }
+                }
+
+                drawCharts(transformed);
               })
               .catch(err => console.error("Chart Load Error:", err));
           });

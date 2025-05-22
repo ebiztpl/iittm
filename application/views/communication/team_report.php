@@ -18,6 +18,7 @@
         }
     </style>
 
+
 </head>
 
 <body class="skin-blue sidebar-mini sidebar-collapse">
@@ -52,7 +53,7 @@
                     <div class="box">
                         <div class="box-body">
                             <div class="row" id="filter-section">
-                                <div class="col-sm-3">
+                                <div class="col-sm-2">
                                     <select id="team_member" class="form-control">
                                         <option value="">Select Team Member</option>
                                         <?php foreach ($user as $u): ?>
@@ -69,20 +70,41 @@
                                     <input type="text" id="to" class="form-control datepicker" placeholder="To Date">
                                 </div>
 
+                                <div class="form-group col-sm-2">
+                                    <select class="form-control" name="assignment_id" id="assignment_filter">
+                                        <option value="">Select Assignment</option>
+                                        <?php foreach ($assignment_list as $row): ?>
+                                            <option value="<?= $row->id ?>"><?= $row->assignment_name ?></option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
+
+                                <!-- Tag Dropdown -->
+                                <div class="form-group col-sm-2">
+                                    <select id="tag_names" name="tag_names[]" multiple placeholder="Choose skills" data-allow-clear="1" class="form-control">
+                                        <?php foreach ($tags as $tag): ?>
+                                            <option value="<?= $tag->name ?>"><?= $tag->name ?></option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
+
                                 <div class="col-sm-2">
                                     <button type="button" id="filterBtn" class="btn btn-success">Search</button>
                                 </div>
                             </div>
                         </div>
 
+
+
                         <!-- main content here -->
                         <div class="box">
-                            <div class="box-body">
+                            <div class="box-body" style="max-height: 300px; overflow-y: auto;">
                                 <table class="table table-bordered">
                                     <thead>
                                         <tr>
                                             <th>S.No</th>
                                             <th>Team Member</th>
+                                            <!-- <th>Tags</th> -->
                                             <th>Date</th>
                                             <th>Assignments</th>
                                         </tr>
@@ -99,6 +121,7 @@
                                                     'admin_name' => $a->admin_name,
                                                     'date' => $date,
                                                     'assignments' => []
+                                                    // 'tags' => []
                                                 ];
                                             }
 
@@ -106,6 +129,16 @@
                                             if (!isset($grouped[$key]['assignments'][$assignment_id])) {
                                                 $grouped[$key]['assignments'][$assignment_id] = $a->assignment_title;
                                             }
+
+                                            // if (!empty($a->tags)) {
+                                            //     $tags_array = explode(',', $a->tags);
+                                            //     foreach ($tags_array as $tag) {
+                                            //         $tag = trim($tag);
+                                            //         if ($tag && !in_array($tag, $grouped[$key]['tags'])) {
+                                            //             $grouped[$key]['tags'][] = $tag;
+                                            //         }
+                                            //     }
+                                            // }
                                         }
 
                                         // ✅ Sort grouped array by date DESCENDING
@@ -119,6 +152,16 @@
                                             <tr>
                                                 <td><?= $sno++ ?></td>
                                                 <td><?= $entry['admin_name'] ?></td>
+                                                <!-- <td>
+                                                    <?php
+                                                    if (!empty($entry['tags'])) {
+                                                        echo implode(', ', $entry['tags']);
+                                                    } else {
+                                                        echo 'No Tags';
+                                                    }
+                                                    ?>
+                                                </td> -->
+
                                                 <td><?= date('d-m-Y', strtotime($entry['date'])) ?></td>
                                                 <td>
                                                     <?php foreach ($entry['assignments'] as $id => $title): ?>
@@ -180,6 +223,12 @@
         <script type="text/javascript" language="javascript" src="https://cdn.datatables.net/buttons/1.6.1/js/buttons.html5.min.js"></script>
         <script type="text/javascript" language="javascript" src="https://cdn.datatables.net/buttons/1.6.1/js/buttons.print.min.js"></script>
 
+
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.6-rc.0/js/select2.min.js"></script>
+
+
 </body>
 
 </html>
@@ -187,6 +236,15 @@
 
 <script>
     $(document).ready(function() {
+
+        $(function() {
+            $('select').each(function() {
+                $("#tag_names").select2({
+                    placeholder: 'Select Tags',
+                    allowClear: Boolean($(this).data('allow-clear')),
+                });
+            });
+        });
 
         $("#loading").hide();
         $('.datepicker').datepicker({
@@ -200,6 +258,8 @@
             var team_member = $('#team_member').val();
             var from = $('#from').val();
             var to = $('#to').val();
+            var assignment_ids = $('#assignment_filter').val(); // Multiselect
+            var tag_names = $('#tag_names').val(); // array of selected assignments
 
             $.ajax({
                 url: "<?= site_url('communication/filter_team') ?>",
@@ -207,8 +267,11 @@
                 data: {
                     team_member: team_member,
                     from: from,
-                    to: to
+                    to: to,
+                    assignment_ids: assignment_ids,
+                    tag_names: tag_names
                 },
+                traditional: true,
                 success: function(response) {
 
                     $('#assignment_table_body').html(response);
@@ -225,12 +288,15 @@
     $(document).on("click", ".assignment-link", function(e) {
         e.preventDefault();
         var assignmentId = $(this).data("id");
-
+        var from = $('#from').val();
+        var to = $('#to').val();
         $.ajax({
             url: "<?php echo site_url('communication/team_assignment_candidates'); ?>",
             type: "POST",
             data: {
-                data: assignmentId
+                data: assignmentId,
+                from: from,
+                to: to,
             },
             dataType: "json",
             success: function(response) {

@@ -2112,148 +2112,134 @@ $duplicate = $duplicate_query->row('duplicate') ?? 0;
 		$this->load->view($this->folder."new_dashboard",array('balance'=>$response,'total_regis'=>$total_regis,'today_candidate'=>$today_candidate,'total_inc'=>$total_inc,'today_inc'=>$today_inc,'total_fee'=>$total_fee,'today_fee'=>$today_fee,'category'=>$category,'gender'=>$gender,'academic'=>$academic,'religion'=>$religion,'study_center1'=>$study_center1,'study_center2'=>$study_center2,'study_center3'=>$study_center3,'study_center4'=>$study_center4,'study_center5'=>$study_center5,'gdpi_center_1'=>$gdpi_center_1,'gdpi_center_2'=>$gdpi_center_2,'gdpi_center_3'=>$gdpi_center_3,'gdpi_center_4'=>$gdpi_center_4,'gdpi_center_5'=>$gdpi_center_5,'Appearing'=>$Appearing,'candidate'=>$ee,'settelment'=>$settelment,'fees'=>$fee_data,'source_chart'=>$source_data,'admission'=>$admission, 'notinterested' => $notinterested,'in_not_interested' => $in_not_interested, 'duplicate' => $duplicate,'gdpi'=>$gdpi,'gdpi_notint' => $gdpi_notint));
 	}
 
-	
-	
-public function chart_graphical_bba()
-    {
-        $seats = 375;
-        $startYear = 2020;
-        $endYear = 2025;
-        $result = [];
-	
-       	$A = $this->load->database('2020', TRUE);
-		$B = $this->load->database('2021', TRUE);
-		$C = $this->load->database('2022', TRUE);
-		$D = $this->load->database('2023', TRUE);
-		$E = $this->load->database('2024', TRUE);
-		$F = $this->load->database('default', TRUE);
-			
-		for ($year = $startYear; $year <= $endYear; $year++) {
-			
-			if($year=='2020'){ $username = $A->username; $password = $A->password; }
-			if($year=='2021'){ $username = $B->username; $password = $B->password; }
-			if($year=='2022'){ $username = $C->username; $password = $C->password; }
-			if($year=='2023'){ $username = $D->username; $password = $D->password; }
-			if($year=='2024'){ $username = $E->username; $password = $E->password; }
-			if($year=='2025'){ $username = $F->username; $password = $F->password; }
-			
-            $db_config = [
-                'dsn'   => '',
-                'hostname' => 'localhost',
-                'username' => $username,     // Update if needed
-                'password' => $password,         // Update if needed
-                'database' => 'iittm_' . $year,
-                'dbdriver' => 'mysqli',
-                'dbprefix' => '',
-                'pconnect' => FALSE,
-                'db_debug' => TRUE,
-                'cache_on' => FALSE,
-                'cachedir' => '',
-                'char_set' => 'utf8',
-                'dbcollat' => 'utf8_general_ci',
-                'swap_pre' => '',
-                'encrypt' => FALSE,
-                'compress' => FALSE,
-                'stricton' => FALSE,
-                'failover' => [],
-                'save_queries' => TRUE
-            ];
-            // Dynamically load DB
-            $DB = $this->load->database($db_config, TRUE);
-            // Count applications
-            $DB->select('candidate_data.*');
-            $DB->from('candidate_data');
-            $DB->join('user_master', 'candidate_data.mobile_verified_id = user_master.user_id');
-            $DB->where('candidate_data.course_name', 1);
-            $DB->where('candidate_data.duplicate', 0);
-            $applications = $DB->count_all_results();
-            // Count admissions
-            $DB->select('candidate_data.*');
-            $DB->from('candidate_data');
-            $DB->join('user_master', 'candidate_data.mobile_verified_id = user_master.user_id');
-            $DB->where('candidate_data.course_name', 1);
-            $DB->where('candidate_data.admission', 1);
-            $DB->where('candidate_data.duplicate', 0);
-            $admissions = $DB->count_all_results();
-            $average = round(($seats + $applications + $admissions) / 3, 2);
-            $result[] = [
-                'year' => $year,
-                'seats' => $seats,
-                'applications' => $applications,
-                'admissions' => $admissions,
-                'average' => $average
-            ];
-        }
-        // Return JSON for AJAX
-        $this->output
-            ->set_content_type('application/json')
-            ->set_output(json_encode($result));
-    }
 
-	public function chartdata_bba_city()
-    {
-        $startYear = 2020;
-        $endYear = 2025;
-        $finalData = [];
-		
-		$A = $this->load->database('2020', TRUE);
-		$B = $this->load->database('2021', TRUE);
-		$C = $this->load->database('2022', TRUE);
-		$D = $this->load->database('2023', TRUE);
-		$E = $this->load->database('2024', TRUE);
-		$F = $this->load->database('default', TRUE);
-			
+
+	public function chart_graphical_bba()
+	{
+		$seats = 375;
+		$startYear = 2020;
+		$endYear = 2025;
+		$result = [];
+		$course_id = 1;
 		for ($year = $startYear; $year <= $endYear; $year++) {
-			
-			if($year=='2020'){ $username = $A->username; $password = $A->password; }
-			if($year=='2021'){ $username = $B->username; $password = $B->password; }
-			if($year=='2022'){ $username = $C->username; $password = $C->password; }
-			if($year=='2023'){ $username = $D->username; $password = $D->password; }
-			if($year=='2024'){ $username = $E->username; $password = $E->password; }
-			if($year=='2025'){ $username = $F->username; $password = $F->password; }
-			
-            $db_config = [
-                'dsn'   => '',
-                'hostname' => 'localhost',
-                'username' => $username,    
-                'password' => $password,   
-                'database' => 'iittm_' . $year,
-                'dbdriver' => 'mysqli',
-                'dbprefix' => '',
-                'pconnect' => FALSE,
-                'db_debug' => TRUE,
-                'cache_on' => FALSE,
-                'cachedir' => '',
-                'char_set' => 'utf8',
-                'dbcollat' => 'utf8_general_ci',
-                'swap_pre' => '',
-                'encrypt' => FALSE,
-                'compress' => FALSE,
-                'stricton' => FALSE,
-                'failover' => [],
-                'save_queries' => TRUE
-            ];
-            // Dynamically load DB
-            $DB = $this->load->database($db_config, TRUE);
-            $DB->select('candidate_data.study_centre_1 as city, COUNT(*) as total');
-            $DB->from('candidate_data');
-            $DB->join('user_master', 'candidate_data.mobile_verified_id = user_master.user_id');
-            $DB->where([
-                'candidate_data.course_name' => 1,
-                'candidate_data.duplicate' => 0
-            ]);
-            $DB->group_by('candidate_data.study_centre_1');
-            $query = $DB->get();
-            $data = $query->result();
-            $cityData = [];
-			 foreach ($data as $row) {
-                $cityData[] = [$row->city, (int)$row->total];
-            }
-			$finalData[$year] = $cityData;
+			$db_config = [
+				'dsn'      => '',
+				'hostname' => 'localhost',
+				'username' => 'root',
+				'password' => '',
+				'database' => 'iittm_' . $year,
+				'dbdriver' => 'mysqli',
+				'dbprefix' => '',
+				'pconnect' => FALSE,
+				'db_debug' => TRUE,
+				'cache_on' => FALSE,
+				'cachedir' => '',
+				'char_set' => 'utf8',
+				'dbcollat' => 'utf8_general_ci',
+				'swap_pre' => '',
+				'encrypt' => FALSE,
+				'compress' => FALSE,
+				'stricton' => FALSE,
+				'failover' => [],
+				'save_queries' => TRUE
+			];
+			$DB = $this->load->database($db_config, TRUE);
+			$DB->select('user_master.user_id');
+			$DB->from('user_master');
+			$DB->join('candidate_data', 'candidate_data.mobile_verified_id = user_master.user_id');
+			$DB->where('user_master.login_status', 2);
+			$DB->where('user_master.razorpay_trans_id !=', '');
+			$DB->where('user_master.course_id', $course_id);
+			$DB->where('candidate_data.duplicate', 0);
+			$registrations = $DB->count_all_results();
+			$DB->select('user_master.user_id');
+			$DB->from('user_master');
+			$DB->join('candidate_data', 'candidate_data.mobile_verified_id = user_master.user_id');
+			$DB->where('user_master.login_status', 2);
+			$DB->where('user_master.razorpay_trans_id !=', '');
+			$DB->where('user_master.course_id', $course_id);
+			$DB->where('candidate_data.admission', 1);
+			$DB->where('candidate_data.duplicate', 0);
+			$admissions = $DB->count_all_results();
+			$average = round(($seats + $registrations + $admissions) / 3, 2);
+			$result[] = [
+				'year' => $year,
+				'seats' => $seats,
+				'applications' => $registrations,
+				'admissions' => $admissions,
+				'average' => $average
+			];
 		}
-        
-        echo json_encode($finalData);
-    }
+		$this->output
+			->set_content_type('application/json')
+			->set_output(json_encode($result));
+	}
+	public function chartdata_bba_city()
+	{
+		$startYear = 2020;
+		$endYear = 2025;
+		// Cities list - keep consistent order as you want
+		$cities = ['Gwalior', 'Bhubaneswar', 'Noida', 'Nellore', 'Goa'];
+		// Initialize an array to hold counts per city per year
+		$cityCounts = [];
+		// Prepare result header
+		$result = [];
+		$result[] = ['City', '2020', '2021', '2022', '2023', '2024', '2025'];
+		// Initialize city counts to zero for each year
+		foreach ($cities as $city) {
+			$cityCounts[$city] = array_fill($startYear, $endYear - $startYear + 1, 0);
+		}
+		for ($year = $startYear; $year <= $endYear; $year++) {
+			// Load DB for this year
+			$db_config = [
+				'dsn'      => '',
+				'hostname' => 'localhost',
+				'username' => 'root',     // Update if needed
+				'password' => '',         // Update if needed
+				'database' => 'iittm_' . $year,
+				'dbdriver' => 'mysqli',
+				'dbprefix' => '',
+				'pconnect' => FALSE,
+				'db_debug' => TRUE,
+				'cache_on' => FALSE,
+				'cachedir' => '',
+				'char_set' => 'utf8',
+				'dbcollat' => 'utf8_general_ci',
+				'swap_pre' => '',
+				'encrypt' => FALSE,
+				'compress' => FALSE,
+				'stricton' => FALSE,
+				'failover' => [],
+				'save_queries' => TRUE
+			];
+			$DB = $this->load->database($db_config, TRUE);
+			// Build query - note the conditions:
+			$DB->select('candidate_data.study_centre_1 as city, COUNT(*) as total');
+			$DB->from('user_master');
+			$DB->join('candidate_data', 'candidate_data.mobile_verified_id = user_master.user_id');
+			$DB->where('user_master.login_status', 2);
+			$DB->where('candidate_data.duplicate !=', 1);
+			$DB->where('user_master.razorpay_trans_id !=', '');
+			$DB->where('user_master.course_id', 1);
+			$DB->group_by('candidate_data.study_centre_1');
+			$query = $DB->get();
+			foreach ($query->result() as $row) {
+				$city = $row->city;
+				if (in_array($city, $cities)) {
+					$cityCounts[$city][$year] = (int)$row->total;
+				}
+			}
+		}
+		// Build the final array for JSON
+		foreach ($cities as $city) {
+			$row = [$city];
+			for ($year = $startYear; $year <= $endYear; $year++) {
+				$row[] = $cityCounts[$city][$year];
+			}
+			$result[] = $row;
+		}
+		echo json_encode(['citychart' => $result]);
+	}
 
 	
 
@@ -2266,146 +2252,134 @@ public function chart_graphical_bba()
 	{
 		$this->load->view($this->folder."chart_graphical_mba",array());
 	}
-	
+
 	public function chart_graphical_mba()
-    {
-        $seats = 750;
-        $startYear = 2020;
-        $endYear = 2025;
-        $result = [];
-		
-		$A = $this->load->database('2020', TRUE);
-		$B = $this->load->database('2021', TRUE);
-		$C = $this->load->database('2022', TRUE);
-		$D = $this->load->database('2023', TRUE);
-		$E = $this->load->database('2024', TRUE);
-		$F = $this->load->database('default', TRUE);
-			
+	{
+		$seats = 750;
+		$startYear = 2020;
+		$endYear = 2025;
+		$result = [];
+		$course_id = 2;
 		for ($year = $startYear; $year <= $endYear; $year++) {
-			
-			if($year=='2020'){ $username = $A->username; $password = $A->password; }
-			if($year=='2021'){ $username = $B->username; $password = $B->password; }
-			if($year=='2022'){ $username = $C->username; $password = $C->password; }
-			if($year=='2023'){ $username = $D->username; $password = $D->password; }
-			if($year=='2024'){ $username = $E->username; $password = $E->password; }
-			if($year=='2025'){ $username = $F->username; $password = $F->password; }
-			
-            $db_config = [
-                'dsn'   => '',
-                'hostname' => 'localhost',
-                'username' => $username,    
-                'password' => $password,        
-                'database' => 'iittm_' . $year,
-                'dbdriver' => 'mysqli',
-                'dbprefix' => '',
-                'pconnect' => FALSE,
-                'db_debug' => TRUE,
-                'cache_on' => FALSE,
-                'cachedir' => '',
-                'char_set' => 'utf8',
-                'dbcollat' => 'utf8_general_ci',
-                'swap_pre' => '',
-                'encrypt' => FALSE,
-                'compress' => FALSE,
-                'stricton' => FALSE,
-                'failover' => [],
-                'save_queries' => TRUE
-            ];
-            // Dynamically load DB
-            $DB = $this->load->database($db_config, TRUE);
-            // Count applications
-            $DB->select('candidate_data.*');
-            $DB->from('candidate_data');
-            $DB->join('user_master', 'candidate_data.mobile_verified_id = user_master.user_id');
-            $DB->where('candidate_data.course_name', 2);
-            $DB->where('candidate_data.duplicate', 0);
-            $applications = $DB->count_all_results();
-            // Count admissions
-            $DB->select('candidate_data.*');
-            $DB->from('candidate_data');
-            $DB->join('user_master', 'candidate_data.mobile_verified_id = user_master.user_id');
-            $DB->where('candidate_data.course_name', 2);
-            $DB->where('candidate_data.admission', 1);
-            $DB->where('candidate_data.duplicate', 0);
-            $admissions = $DB->count_all_results();
-            $average = round(($seats + $applications + $admissions) / 3, 2);
-            $result[] = [
-                'year' => $year,
-                'seats' => $seats,
-                'applications' => $applications,
-                'admissions' => $admissions,
-                'average' => $average
-            ];
-        }
-        // Return JSON for AJAX
-        $this->output
-            ->set_content_type('application/json')
-            ->set_output(json_encode($result));
-    }
-	
+			$db_config = [
+				'dsn'      => '',
+				'hostname' => 'localhost',
+				'username' => 'root',
+				'password' => '',
+				'database' => 'iittm_' . $year,
+				'dbdriver' => 'mysqli',
+				'dbprefix' => '',
+				'pconnect' => FALSE,
+				'db_debug' => TRUE,
+				'cache_on' => FALSE,
+				'cachedir' => '',
+				'char_set' => 'utf8',
+				'dbcollat' => 'utf8_general_ci',
+				'swap_pre' => '',
+				'encrypt' => FALSE,
+				'compress' => FALSE,
+				'stricton' => FALSE,
+				'failover' => [],
+				'save_queries' => TRUE
+			];
+			$DB = $this->load->database($db_config, TRUE);
+			$DB->select('user_master.user_id');
+			$DB->from('user_master');
+			$DB->join('candidate_data', 'candidate_data.mobile_verified_id = user_master.user_id');
+			$DB->where('user_master.login_status', 2);
+			$DB->where('user_master.razorpay_trans_id !=', '');
+			$DB->where('user_master.course_id', $course_id);
+			$DB->where('candidate_data.duplicate', 0);
+			$registrations = $DB->count_all_results();
+			$DB->select('user_master.user_id');
+			$DB->from('user_master');
+			$DB->join('candidate_data', 'candidate_data.mobile_verified_id = user_master.user_id');
+			$DB->where('user_master.login_status', 2);
+			$DB->where('user_master.razorpay_trans_id !=', '');
+			$DB->where('user_master.course_id', $course_id);
+			$DB->where('candidate_data.admission', 1);
+			$DB->where('candidate_data.duplicate', 0);
+			$admissions = $DB->count_all_results();
+			$average = round(($seats + $registrations + $admissions) / 3, 2);
+			$result[] = [
+				'year' => $year,
+				'seats' => $seats,
+				'applications' => $registrations,
+				'admissions' => $admissions,
+				'average' => $average
+			];
+		}
+		$this->output
+			->set_content_type('application/json')
+			->set_output(json_encode($result));
+	}
 	
 	public function chartdata_mba_city()
-    {
-        $startYear = 2020;
-        $endYear = 2025;
-        $finalData = [];
-		
-		$A = $this->load->database('2020', TRUE);
-		$B = $this->load->database('2021', TRUE);
-		$C = $this->load->database('2022', TRUE);
-		$D = $this->load->database('2023', TRUE);
-		$E = $this->load->database('2024', TRUE);
-		$F = $this->load->database('default', TRUE);
-			
+	{
+		$startYear = 2020;
+		$endYear = 2025;
+		// Cities list - keep consistent order as you want
+		$cities = ['Gwalior', 'Bhubaneswar', 'Noida', 'Nellore', 'Goa'];
+		// Initialize an array to hold counts per city per year
+		$cityCounts = [];
+		// Prepare result header
+		$result = [];
+		$result[] = ['City', '2020', '2021', '2022', '2023', '2024', '2025'];
+		// Initialize city counts to zero for each year
+		foreach ($cities as $city) {
+			$cityCounts[$city] = array_fill($startYear, $endYear - $startYear + 1, 0);
+		}
 		for ($year = $startYear; $year <= $endYear; $year++) {
-			
-			if($year=='2020'){ $username = $A->username; $password = $A->password; }
-			if($year=='2021'){ $username = $B->username; $password = $B->password; }
-			if($year=='2022'){ $username = $C->username; $password = $C->password; }
-			if($year=='2023'){ $username = $D->username; $password = $D->password; }
-			if($year=='2024'){ $username = $E->username; $password = $E->password; }
-			if($year=='2025'){ $username = $F->username; $password = $F->password; }
-            $db_config = [
-                'dsn'   => '',
-                'hostname' => 'localhost',
-                'username' => $username,     // Update if needed
-                'password' => $password,         // Update if needed
-                'database' => 'iittm_' . $year,
-                'dbdriver' => 'mysqli',
-                'dbprefix' => '',
-                'pconnect' => FALSE,
-                'db_debug' => TRUE,
-                'cache_on' => FALSE,
-                'cachedir' => '',
-                'char_set' => 'utf8',
-                'dbcollat' => 'utf8_general_ci',
-                'swap_pre' => '',
-                'encrypt' => FALSE,
-                'compress' => FALSE,
-                'stricton' => FALSE,
-                'failover' => [],
-                'save_queries' => TRUE
-            ];
-            // Dynamically load DB
-            $DB = $this->load->database($db_config, TRUE);
-            $DB->select('candidate_data.study_centre_1 as city, COUNT(*) as total');
-            $DB->from('candidate_data');
-            $DB->join('user_master', 'candidate_data.mobile_verified_id = user_master.user_id');
-            $DB->where([
-                'candidate_data.course_name' => 2,
-                'candidate_data.duplicate' => 0
-            ]);
-            $DB->group_by('candidate_data.study_centre_1');
-            $query = $DB->get();
-            $data = $query->result();
-            $cityData = [];
-            foreach ($data as $row) {
-                $cityData[] = [$row->city, (int)$row->total];
-            }
-            $finalData[$year] = $cityData;
-        }
-        echo json_encode($finalData);
-    }
+			// Load DB for this year
+			$db_config = [
+				'dsn'      => '',
+				'hostname' => 'localhost',
+				'username' => 'root',     // Update if needed
+				'password' => '',         // Update if needed
+				'database' => 'iittm_' . $year,
+				'dbdriver' => 'mysqli',
+				'dbprefix' => '',
+				'pconnect' => FALSE,
+				'db_debug' => TRUE,
+				'cache_on' => FALSE,
+				'cachedir' => '',
+				'char_set' => 'utf8',
+				'dbcollat' => 'utf8_general_ci',
+				'swap_pre' => '',
+				'encrypt' => FALSE,
+				'compress' => FALSE,
+				'stricton' => FALSE,
+				'failover' => [],
+				'save_queries' => TRUE
+			];
+			$DB = $this->load->database($db_config, TRUE);
+			// Build query - note the conditions:
+			$DB->select('candidate_data.study_centre_1 as city, COUNT(*) as total');
+			$DB->from('user_master');
+			$DB->join('candidate_data', 'candidate_data.mobile_verified_id = user_master.user_id');
+			$DB->where('user_master.login_status', 2);
+			$DB->where('candidate_data.duplicate !=', 1);
+			$DB->where('user_master.razorpay_trans_id !=', '');
+			$DB->where('user_master.course_id', 2);
+			$DB->group_by('candidate_data.study_centre_1');
+			$query = $DB->get();
+			foreach ($query->result() as $row) {
+				$city = $row->city;
+				if (in_array($city, $cities)) {
+					$cityCounts[$city][$year] = (int)$row->total;
+				}
+			}
+		}
+		// Build the final array for JSON
+		foreach ($cities as $city) {
+			$row = [$city];
+			for ($year = $startYear; $year <= $endYear; $year++) {
+				$row[] = $cityCounts[$city][$year];
+			}
+			$result[] = $row;
+		}
+		echo json_encode(['citychart' => $result]);
+	}
 
 	public function get_course_data()
     {
