@@ -750,13 +750,17 @@
 <script type="text/javascript">
 	$(function() {
 		$('#example2').dataTable({
-			"bPaginate": true,
+			"fixedHeader": true,
+			"bPaginate": false,
 			"bLengthChange": false,
 			"bFilter": false,
 			"bSort": true,
+			"order": [0, "asc"],
 			"bInfo": true,
 			"bAutoWidth": false,
 			"searching": true,
+			"bRetreive": true,
+			"destroy": true,
 			dom: 'Bfrtip',
 			lengthMenu: [
 				[25, 50, -1],
@@ -765,9 +769,6 @@
 			buttons: [
 				'copy', 'csv', 'excel', 'pdf', 'print'
 			],
-
-
-
 		});
 	});
 </script>
