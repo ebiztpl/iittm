@@ -341,7 +341,7 @@
             <div class="col-sm-12">
                <div class="form-group">
                 <label>Notes</label>
-				    <span style="float: right; color:red; font-weight: bold; font-size:"><input type="radio" name="status" value="1" /> Dead Lead</span>
+				    <span style="float: right; color:red; font-weight: bold;"><input type="radio" name="status" value="1" /> Dead Lead</span>
                 <textarea class="form-control" name="notes"></textarea>
               </div>
             </div>
@@ -484,7 +484,7 @@
             <div class="col-sm-12">
                <div class="form-group">
                 <label>Notes</label>
-            <span style="float: right; color:red; font-weight: bold; font-size:"><input type="radio" name="edit_status" value="1" id="edit_status" /> Dead Lead</span>
+            <span style="float: right; color:red; font-weight: bold;"><input type="radio" name="edit_status" value="1" id="edit_status" /> Dead Lead</span>
                 <textarea class="form-control" name="edit_notes" id="edit_notes"></textarea>
               </div>
             </div>

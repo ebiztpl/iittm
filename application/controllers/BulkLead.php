@@ -29,9 +29,14 @@ class Bulklead extends CI_Controller
 
             // Server side validation: check title is not empty
             if (empty($title)) {
-                $this->session->set_flashdata('error', 'Title is required.');
-                redirect("bulklead/create_master");
-                return;
+                if ($this->input->is_ajax_request()) {
+                    echo json_encode(['status' => 'error', 'message' => 'Title is required.']);
+                    return;
+                } else {
+                    $this->session->set_flashdata('error', 'Title is required.');
+                    redirect("bulklead/create_master");
+                    return;
+                }
             }
 
             $insert_data = [
@@ -43,21 +48,26 @@ class Bulklead extends CI_Controller
             $this->db->insert('bulk_leads', $insert_data);
 
             if ($this->db->affected_rows() > 0) {
-                setFlash("ViewMsgSuccess", "<div class='alert alert-success alert-dismissible'><button type='button' class='close' data-dismiss='alert' aria-hidden='true'>×</button><h4 style='    display: contents;'><i class='icon fa fa-info'></i> Success!</h4> Record Insert Successfully!</div>");
-                redirect("bulklead/create_master");
-            } else {
-                setFlash("ViewMsgWarning", "<div class='alert alert-danger alert-dismissible'><button type='button' class='close' data-dismiss='alert' aria-hidden='true'>×</button><h4 style='display: contents;'><i class='icon fa fa-info'></i> Failed!</h4> Something went wrong!</div>");
-                redirect("bulklead/create_master");
-            }
+                if ($this->input->is_ajax_request()) {
+                    echo json_encode(['status' => 'success', 'message' => 'Record Inserted Successfully!']);
+                } else {
+                    setFlash("ViewMsgSuccess", "<div class='alert alert-success alert-dismissible'>...</div>");
+                    redirect("bulklead/create_master");
+                }
 
-            // else {
-            //     setFlash("ViewMsgWarning", "<div class='alert alert-warning alert-dismissible'><button type='button' class='close' data-dismiss='alert' aria-hidden='true'>×</button><h4 style='display: contents;'><i class='icon fa fa-info'></i> Warning!</h4> User already with this name</div>");
-            //     redirect("bulklead/create_master");
-            // }
+            } else {
+                if ($this->input->is_ajax_request()) {
+                    echo json_encode(['status' => 'error', 'message' => 'Something went wrong!']);
+                } else {
+                    setFlash("ViewMsgWarning", "<div class='alert alert-danger alert-dismissible'>...</div>");
+                    redirect("bulklead/create_master");
+                }
+            }
+        } else {
+            // For normal page load (non-AJAX), just load the upload form
+            $data['title'] = $this->db->distinct()->select('id, title')->get('bulk_leads')->result_array();
+            $this->load->view($this->folder . "bulklead",  $data);
         }
-        // For normal page load (non-AJAX), just load the upload form
-        $data['title'] = $this->db->distinct()->select('id, title')->get('bulk_leads')->result_array();
-        $this->load->view($this->folder . "bulklead",  $data);
     }
 
     public function download_sample()
@@ -71,7 +81,7 @@ class Bulklead extends CI_Controller
         $output = fopen('php://output', 'w');
 
         // Headers
-        fputcsv($output, ['S.No.', 'Full Name', 'Email', 'Mobile', 'DOB', 'Course', 'Father Name', 'Mother Name', 'Gender', 'Religion', 'Category', 'Nationality', 'parma_appertment', 'parma_colony', 'parma_area', 'parma_state', 'parma_city', 'parma_pincode']);
+        fputcsv($output, ['S.No.', 'First Name', 'Middle Name', 'Last Name', 'Email', 'Mobile', 'DOB', 'Course', 'Father Name', 'Mother Name', 'Gender', 'Religion', 'Category', 'Nationality', 'parma_appertment', 'parma_colony', 'parma_area', 'parma_state', 'parma_city', 'parma_pincode']);
 
 
         fclose($output);
@@ -80,68 +90,82 @@ class Bulklead extends CI_Controller
 
     public function upload_data()
     {
+        header('Content-Type: application/json');
+        
         $title = $this->input->post('title');
 
-        // if (empty($title)) {
-        //     $this->session->set_flashdata("error", "Please select a title.");
-        //     redirect("bulklead/create_master");
-        //     return;
-        // }
-
-        // if (empty($_FILES['upload_file']['name'])) {
-        //     $this->session->set_flashdata("error", "Please select a file to upload.");
-        //     redirect("bulklead/create_master");
-        //     return;
-        // }
+        if (empty($title)) {
+            echo json_encode(['status' => 'error', 'message' => 'Please select a title.']);
+            return;
+        }
+    
+        if (empty($_FILES['upload_file']['name'])) {
+            echo json_encode(['status' => 'error', 'message' => 'Please select a file to upload.']);
+            return;
+        }
 
         $file = $_FILES['upload_file']['tmp_name'];
-
-        // try {
-        //     $spreadsheet = IOFactory::load($file);
-        // } catch (\PhpOffice\PhpSpreadsheet\Reader\Exception $e) {
-        //     $this->session->set_flashdata("error", "Error reading file: " . $e->getMessage());
-        //     redirect("bulklead/create_master");
-        //     return;
-        // }
-
-        // $sheetData = $spreadsheet->getActiveSheet()->toArray(null, true, true, true);
 
         if (($handle = fopen($file, "r")) !== FALSE) {
             $row = 0;
             while (($data = fgetcsv($handle, 1000, ",")) !== FALSE) {
                 $row++;
                 if ($row == 1) continue; // Skip header row
+                $first_name     = isset($data[1]) ? trim($data[1]) : '';
+                $middle_name    = isset($data[2]) ? trim($data[2]) : '';
+                $last_name      = isset($data[3]) ? trim($data[3]) : '';
+                $email          = isset($data[4]) ? trim($data[4]) : '';
+                $mobile         = isset($data[5]) ? trim($data[5]) : '';
+                $raw_dob        = isset($data[6]) ? trim($data[6]) : '';
+                $course         = isset($data[7]) ? trim($data[7]) : '';
+                $father_name    = isset($data[8]) ? trim($data[8]) : '';
+                $mother_name    = isset($data[9]) ? trim($data[9]) : '';
+                $gender         = isset($data[10]) ? trim($data[10]) : '';
+                $religion       = isset($data[11]) ? trim($data[11]) : '';
+                $category       = isset($data[12]) ? trim($data[12]) : '';
+                $nationality    = isset($data[13]) ? trim($data[13]) : '';
+                $parma_appertment  = isset($data[14]) ? trim($data[14]) : '';
+                $parma_colony   = isset($data[15]) ? trim($data[15]) : '';
+                $parma_area     = isset($data[16]) ? trim($data[16]) : '';
+                $parma_state    = isset($data[17]) ? trim($data[17]) : '';
+                $parma_city     = isset($data[18]) ? trim($data[18]) : '';
+                $parma_pincode  = isset($data[19]) ? trim($data[19]) : '';
 
-                // Assuming your CSV columns correspond to these indexes (0-based)
-                // Adjust indexes if needed
-                // For example, B = column 1, C=2, D=3, etc.
-                $full_name      = isset($data[1]) ? trim($data[1]) : '';
-                $email          = isset($data[2]) ? trim($data[2]) : '';
-                $mobile         = isset($data[3]) ? trim($data[3]) : '';
-                $dob            = isset($data[4]) ? trim($data[4]) : '';
-                $course         = isset($data[5]) ? trim($data[5]) : '';
-                $father_name    = isset($data[6]) ? trim($data[6]) : '';
-                $mother_name    = isset($data[7]) ? trim($data[7]) : '';
-                $gender         = isset($data[8]) ? trim($data[8]) : '';
-                $religion       = isset($data[9]) ? trim($data[9]) : '';
-                $category       = isset($data[10]) ? trim($data[10]) : '';
-                $nationality    = isset($data[11]) ? trim($data[11]) : '';
-                $parma_appertment  = isset($data[12]) ? trim($data[12]) : '';
-                $parma_colony   = isset($data[13]) ? trim($data[13]) : '';
-                $parma_area     = isset($data[14]) ? trim($data[14]) : '';
-                $parma_state    = isset($data[15]) ? trim($data[15]) : '';
-                $parma_city     = isset($data[16]) ? trim($data[16]) : '';
-                $parma_pincode  = isset($data[17]) ? trim($data[17]) : '';
+                if (empty($first_name) || empty($mobile)) continue;
 
-                if (empty($full_name) || empty($mobile)) continue;
+                // // Split full name
+                // $name_parts = explode(' ', $full_name);
+                // $first_name = $name_parts[0] ?? '';
+                // $middle_name = $name_parts[1] ?? '';
+                // $last_name = isset($name_parts[2]) ? implode(' ', array_slice($name_parts, 2)) : '';
 
-                // Split full name
-                $name_parts = explode(' ', $full_name);
-                $first_name = $name_parts[0] ?? '';
-                $middle_name = $name_parts[1] ?? '';
-                $last_name = isset($name_parts[2]) ? implode(' ', array_slice($name_parts, 2)) : '';
+                // date format yyyy-mm-dd
+                $dob = '';
+                if (!empty($raw_dob)) {
+                    $timestamp = strtotime($raw_dob);
+                    if ($timestamp !== false) {
+                        $dob = date('Y-m-d', $timestamp);
+                    }
+                }
 
-                // Check if user with login_status=1
+                // Get state ID
+                $this->db->where('name', $parma_state);
+                $state = $this->db->get('states')->row();
+                $parma_state = $state ? $state->id : 0;
+
+                // Get city ID
+                $this->db->where('name', $parma_city);
+                $city = $this->db->get('cities')->row();
+                $parma_city = $city ? $city->id : 0;
+
+                // Map course to ID
+                $course_name = strtolower($course);
+                $course_id = 0;
+                if ($course_name === 'bba') {
+                    $course_id = 1;
+                } elseif ($course_name === 'mba') {
+                    $course_id = 2;
+                }
 
                 // $mobile = $this->db->escape($mobile);
                 $this->db->where("CONVERT(user_mobile USING utf8) =", $mobile);
@@ -155,7 +179,7 @@ class Bulklead extends CI_Controller
                     // Insert into user_master (only once if needed)
                     $this->db->insert('user_master', [
                         'user_mobile'     => $mobile,
-                        'course_id'  => $course,
+                        'course_id'  => $course_id,
                         'created_date' => date('Y-m-d H:i:s')
                     ]);
                     if ($this->db->affected_rows() == 0) {
@@ -173,9 +197,9 @@ class Bulklead extends CI_Controller
                     'middle_name'     => $middle_name,
                     'last_name'       => $last_name,
                     'mobile'          => $mobile,
-                    'email_id'           => $email,
+                    'email_id'        => $email,
                     'dob'             => $dob,
-                    'course_name'          => $course,
+                    'course_name'     => $course_id,
                     'father_name'     => $father_name,
                     'mother_name'     => $mother_name,
                     'gender'          => $gender,
@@ -195,7 +219,6 @@ class Bulklead extends CI_Controller
                     'corre_city'      => $parma_city,
                     'corre_pincode'   => $parma_pincode,
                     'source'          => $title,
-                    // 'created_at'      => date('Y-m-d H:i:s')
                 ]);
                 if ($this->db->affected_rows() == 0) {
                     $error = $this->db->error();
@@ -204,10 +227,10 @@ class Bulklead extends CI_Controller
                 }
             }
             fclose($handle);
-            $this->session->set_flashdata("ViewMsgSuccess", "<div class='alert alert-success alert-dismissible'><button type='button' class='close' data-dismiss='alert' aria-hidden='true'>×</button><h4><i class='icon fa fa-info'></i> Success!</h4> Data uploaded successfully!</div>");
+            echo json_encode(['status' => 'success', 'message' => 'Data Uploaded Successfully!']);
         } else {
-            $this->session->set_flashdata("error", "Unable to open the uploaded file.");
+            $this->session->set_flashdata("error", "Unable to Open the Uploaded File.");
         }
-        redirect("bulklead/create_master");
+        // redirect("bulklead/create_master");
     }
 }
