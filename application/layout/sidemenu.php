@@ -118,6 +118,20 @@ if ($this->session->userdata['role'] == "telecaller" || $this->session->userdata
 
             </ul>
           </li>
+
+
+          <li class="<?php if ($index == 1207) echo 'active' ?> treeview">
+            <a href="#">
+              <i class="fa fa-table"></i>
+              <span>My Reort</span>
+              <span class="pull-right-container">
+                <i class="fa fa-angle-left pull-right"></i>
+              </span>
+            </a>
+            <ul class="treeview-menu">
+              <li class="<?php if ($index == 1209) echo 'active' ?>"><a href="<?php echo base_url(); ?>index.php/Myreport/filter_report"><i class="fa fa-angle-double-right"></i>My Report</a></li>
+            </ul>
+          </li>
         </ul>
       </section>
     </aside>
