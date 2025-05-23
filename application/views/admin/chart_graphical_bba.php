@@ -212,7 +212,32 @@
               .then(res => res.json())
               .then(data => {
                 console.log("Fetched Data:", data);
-                drawCharts(data);
+
+                const table = data.citychart;
+                if (!table || table.length < 2) {
+                  console.error("Invalid data format");
+                  return;
+                }
+
+                const header = table[0]; 
+                const years = header.slice(1);
+
+                const transformed = {};
+                years.forEach(y => {
+                  transformed[y] = [];
+                });
+
+                for (let i = 1; i < table.length; i++) {
+                  const row = table[i];
+                  const city = row[0];
+                  for (let j = 1; j < row.length; j++) {
+                    const year = header[j];
+                    const count = parseInt(row[j]) || 0;
+                    transformed[year].push([city, count]);
+                  }
+                }
+
+                drawCharts(transformed);
               })
               .catch(err => console.error("Chart Load Error:", err));
           });
@@ -265,234 +290,6 @@
         google.charts.setOnLoadCallback(drawChart);
       </script>
 
-
-
-      <!-- <script type="text/javascript">
-function validateCtrl($scope,$log,$http)
-{
- 
-}
-</script>
-
-
-<script type="text/javascript">
- 
-  function drawChart2020() 
-  {
-
-    var oldData = google.visualization.arrayToDataTable([
-      ['Name', 'Seat'],
-      ['Gwalior', 112],
-      ['Noida', 113],
-      ['Bhuvneshwar', 75],
-      ['Nellore', 75],
-    ]);
-
-    var newData = google.visualization.arrayToDataTable([
-      ['Name', 'Application'],
-      ['Gwalior', 346],
-      ['Noida', 312],
-      ['Bhuvneshwar', 102],
-      ['Nellore', 133],
-    ]);
-
- 
-    var colChartDiff = new google.visualization.ColumnChart(document.getElementById('colchart_diff_2020'));
-    // var view = new google.visualization.DataView(newData);
-    // view.setColumns([0, 1, {
-    //   calc: 'stringify',
-    //   role: 'annotation',
-    //   sourceColumn: 1,
-    //   type: 'string'
-    // }]);
-    var options = { title: "2020", titleTextStyle: { fontSize: 20, bold: true}, legend: { position: 'top', alignment: 'start' }, chartArea:{left:60,top:60,bottom:30,width:"100%",height:"100%"},colors: ['#69247C','green'],  };
-    var diffData = colChartDiff.computeDiff(oldData, newData);
-    colChartDiff.draw(diffData, options);
-    
-  }
-
-
-  function drawChart2021() {
-
-    var oldData = google.visualization.arrayToDataTable([
-      ['Name', 'Seat'],
-      ['Gwalior', 112],
-      ['Noida', 113],
-      ['Bhuvneshwar', 75],
-      ['Nellore', 75],
-    ]);
-
-    var newData = google.visualization.arrayToDataTable([
-      ['Name', 'Application'],
-      ['Gwalior', 287],
-      ['Noida', 289],
-      ['Bhuvneshwar', 82],
-      ['Nellore', 104],
-    ]);
-
- 
-    var colChartDiff = new google.visualization.ColumnChart(document.getElementById('colchart_diff_2021'));
-    var options = { title: "2021",  titleTextStyle: { fontSize: 20, bold: true}, legend: { position: 'top'}, chartArea:{left:60,top:60,bottom:30,width:"100%",height:"100%"},colors: ['orange','green'], };
-    var diffData = colChartDiff.computeDiff(oldData, newData);
-    colChartDiff.draw(diffData, options);
-    
-  }
-
-
-  function drawChart2022() {
-
-    var oldData = google.visualization.arrayToDataTable([
-      ['Name', 'Seat'],
-      ['Gwalior', 112],
-      ['Noida', 113],
-      ['Bhuvneshwar', 75],
-      ['Nellore', 75],
-    ]);
-
-    var newData = google.visualization.arrayToDataTable([
-      ['Name', 'Application'],
-      ['Gwalior', 292],
-      ['Noida', 179],
-      ['Bhuvneshwar', 62],
-      ['Nellore', 62],
-    ]);
-
- 
-    var colChartDiff = new google.visualization.ColumnChart(document.getElementById('colchart_diff_2022'));
-    var options = { title: "2022", titleTextStyle: { fontSize: 20, bold: true}, legend: { position: 'top' }, chartArea:{left:60,top:60,bottom:30,width:"100%",height:"100%"},colors: ['green','green'], };
-    var diffData = colChartDiff.computeDiff(oldData, newData);
-    colChartDiff.draw(diffData, options);
-    
-  }
-
-
-  function drawChart2023() {
-
-    var oldData = google.visualization.arrayToDataTable([
-      ['Name', 'Seat'],
-      ['Gwalior', 112],
-      ['Noida', 113],
-      ['Bhuvneshwar', 75],
-      ['Nellore', 75],
-    ]);
-
-    var newData = google.visualization.arrayToDataTable([
-      ['Name', 'Application'],
-      ['Gwalior', 262],
-      ['Noida', 232],
-      ['Bhuvneshwar', 86],
-      ['Nellore', 85],
-    ]);
-
- 
-    var colChartDiff = new google.visualization.ColumnChart(document.getElementById('colchart_diff_2023'));
-    var options = { title: "2023", titleTextStyle: { fontSize: 20, bold: true}, legend: { position: 'top' }, chartArea:{left:60,top:60,bottom:30,width:"100%",height:"100%"},colors: ['blue','green'], };
-    var diffData = colChartDiff.computeDiff(oldData, newData);
-    colChartDiff.draw(diffData, options);
-    
-  }
-
-
-  function drawChart2024() {
-
-    var oldData = google.visualization.arrayToDataTable([
-      ['Name', 'Seat'],
-      ['Gwalior', 112],
-      ['Noida', 113],
-      ['Bhuvneshwar', 75],
-      ['Nellore', 75],
-      ['Goa', 0],
-    ]);
-
-    var newData = google.visualization.arrayToDataTable([
-      ['Name', 'Application'],
-      ['Gwalior', 202],
-      ['Noida', 133],
-      ['Bhuvneshwar', 45],
-      ['Nellore', 48],
-      ['Goa', 4],
-    ]);
-
- 
-    var colChartDiff = new google.visualization.ColumnChart(document.getElementById('colchart_diff_2024'));
-    var options = { title: "2024", titleTextStyle: { fontSize: 20, bold: true}, legend: { position: 'top' }, chartArea:{left:60,top:60,bottom:30,width:"100%",height:"100%"},colors: ['red','green']};
-    var diffData = colChartDiff.computeDiff(oldData, newData);
-    colChartDiff.draw(diffData, options);
-    
-  }
-
-  function drawChart2025() {
-
-    var oldData = google.visualization.arrayToDataTable([
-      ['Name', 'Seat'],
-      ['Gwalior', 312],
-      ['Noida', 113],
-      ['Bhuvneshwar', 175],
-      ['Nellore', 75],
-      ['Goa', 90],
-    ]);
-
-    var newData = google.visualization.arrayToDataTable([
-      ['Name', 'Application'],
-      ['Gwalior', 302],
-      ['Noida', 153],
-      ['Bhuvneshwar', 255],
-      ['Nellore', 108],
-      ['Goa', 44],
-    ]);
-
- 
-    var colChartDiff = new google.visualization.ColumnChart(document.getElementById('colchart_diff_2025'));
-    var options = { title: "2025", titleTextStyle: { fontSize: 20, bold: true}, legend: { position: 'top' }, chartArea:{left:60,top:60,bottom:30,width:"100%",height:"100%"},colors: ['brown','green']};
-    var diffData = colChartDiff.computeDiff(oldData, newData);
-    colChartDiff.draw(diffData, options);
-    
-  }
-
-    google.charts.load('current', {packages:['corechart']});
-    google.charts.setOnLoadCallback(drawChart2020);
-    google.charts.setOnLoadCallback(drawChart2021);
-    google.charts.setOnLoadCallback(drawChart2022);
-    google.charts.setOnLoadCallback(drawChart2023);
-    google.charts.setOnLoadCallback(drawChart2024);
-    google.charts.setOnLoadCallback(drawChart2025);
-
-
-
- function drawVisualization() {
-        // Some raw data (not necessarily accurate)
-        var data = google.visualization.arrayToDataTable([
-          ['Years', 'Application', 'Seats', 'Admission', 'Average'],
-          ['2020',  893,      375,         245,        504.3],
-          ['2021',  762,      375,        229,        455.3],
-          ['2022',  595,      375,        196,        388.6],
-          ['2023',  665,      375,        216,        418.6],
-          ['2024',  432,      375,         194,        333.6],
-          ['2025',  513,      375,         167,        351.6]
-        ]);
-
-         var view = new google.visualization.DataView(data);
-          view.setColumns([0, 1, {
-            calc: 'stringify',
-            role: 'annotation',
-            sourceColumn: 1,
-            type: 'string'
-          }]);
-
-        var options = {
-          title : '',
-          vAxis: {title: ''},
-          hAxis: {title: 'Years'},
-          seriesType: 'bars',
-          series: {3: {type: 'line'}}
-        };
-
-        var chart = new google.visualization.ComboChart(document.getElementById('comparison'));
-        chart.draw(data,options);
-}
-      google.charts.setOnLoadCallback(drawVisualization);
-
-</script> -->
 
       <?php $this->load->view('../layout/footer.php'); ?>
 

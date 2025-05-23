@@ -173,100 +173,96 @@
     <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
     <script type="text/javascript">
       $(document).ready(function() {
-        $("#loading").hide();
-
-        setTimeout(function() {
-          var table = $('#myTable').DataTable({
-            scrollY: 500,
-            scrollX: false,
-            scrollCollapse: true,
-            paging: false,
-            fixedHeader: true
-          });
-
-
-
-
-
-        });
-
-
-      });
-
-
-
-      function validateCtrl($scope, $log, $http) {
-
-        $scope.districtlist = <?php echo json_encode($districtlist) ?>;
-
-        $scope.get_course = function($event) {
-          $("#loading").show();
-          var course = angular.element(document.querySelector('#course')).val();
-          var center = angular.element(document.querySelector('#study_center')).val();
-
-          var data = course + '~' + center;
-
-          $http({
-            method: "get",
-            dataType: 'html',
-            url: "<?php echo site_url('admin/report2_filter?data='); ?>" + data
-          }).then(function(response) {
-            console.log(response.data);
             $("#loading").hide();
-            $("#record").html(response.data.filtered_total);
-            $scope.districtlist = response.data['districtlist'];
 
-          });
+            setTimeout(function() {
+                  var table = $('#myTable').DataTable({
+                    scrollY: 500,
+                    scrollX: false,
+                    scrollCollapse: true,
+                    paging: false,
+                    fixedHeader: true
+                  });
 
-        };
-
-        $scope.statewisecity = function(id) {
-          $("#loading").show();
-          var course = angular.element(document.querySelector('#course')).val();
-          var center = angular.element(document.querySelector('#study_center')).val();
-          var data = course + '~' + id + '~' + center;
-          $http({
-            method: "get",
-            dataType: 'html',
-            url: "<?php echo site_url('admin/statewisecity?data='); ?>" + data
-          }).then(function(response) {
-            console.log(response.data);
-            $("#loading").hide();
-            //$row = $(this).closest('tr');
-            //console.log($row);
-            $scope.rows = response.data;
-            $("#citymodal").modal('show');
-          });
-
-        };
-
-        $scope.getGrandTotal = function() {
-          var course = angular.element(document.querySelector('#course')).val();
-          $http({
-            method: "get",
-            url: "<?php echo site_url('admin/report2_grandtotal?course='); ?>" + course
-          }).then(function(response) {
-            document.getElementById('record').innerText = response.data.grand_total;
-            $("#record").html(response.data.grand_total);
-          });
-        };
-
-        $scope.getGrandTotal();
-
-      }
+    });
 
 
-      $('.dataTable').on('click', 'tbody td', function() {
+    });
 
-        //get textContent of the TD
-        console.log('TD cell textContent : ', this.textContent)
 
-        //get the value of the TD using the API 
-        console.log('value by API : ', table.cell({
-          row: this.parentNode.rowIndex,
-          column: this.cellIndex
-        }).data());
-      })
+
+    function validateCtrl($scope, $log, $http) {
+
+    $scope.districtlist = <?php echo json_encode($districtlist) ?>;
+
+    $scope.get_course = function($event) {
+    $("#loading").show();
+    var course = angular.element(document.querySelector('#course')).val();
+    var center = angular.element(document.querySelector('#study_center')).val();
+
+    var data = course + '~' + center;
+
+    $http({
+    method: "get",
+    dataType: 'html',
+    url: "<?php echo site_url('admin/report2_filter?data='); ?>" + data
+    }).then(function(response) {
+    console.log(response.data);
+    $("#loading").hide();
+    $("#record").html(response.data.filtered_total);
+    $scope.districtlist = response.data['districtlist'];
+
+    });
+
+    };
+
+    $scope.statewisecity = function(id) {
+    $("#loading").show();
+    var course = angular.element(document.querySelector('#course')).val();
+    var center = angular.element(document.querySelector('#study_center')).val();
+    var data = course + '~' + id + '~' + center;
+    $http({
+    method: "get",
+    dataType: 'html',
+    url: "<?php echo site_url('admin/statewisecity?data='); ?>" + data
+    }).then(function(response) {
+    console.log(response.data);
+    $("#loading").hide();
+    //$row = $(this).closest('tr');
+    //console.log($row);
+    $scope.rows = response.data;
+    $("#citymodal").modal('show');
+    });
+
+    };
+
+    $scope.getGrandTotal = function() {
+    var course = angular.element(document.querySelector('#course')).val();
+    $http({
+    method: "get",
+    url: "<?php echo site_url('admin/report2_grandtotal?course='); ?>" + course
+    }).then(function(response) {
+    document.getElementById('record').innerText = response.data.grand_total;
+    $("#record").html(response.data.grand_total);
+    });
+    };
+
+    $scope.getGrandTotal();
+
+    }
+
+
+    $('.dataTable').on('click', 'tbody td', function() {
+
+    //get textContent of the TD
+    console.log('TD cell textContent : ', this.textContent)
+
+    //get the value of the TD using the API
+    console.log('value by API : ', table.cell({
+    row: this.parentNode.rowIndex,
+    column: this.cellIndex
+    }).data());
+    })
     </script>
 
     <?php $this->load->view('../layout/footer.php'); ?>

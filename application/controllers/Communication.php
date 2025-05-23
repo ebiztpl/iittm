@@ -832,6 +832,7 @@ class Communication extends CI_Controller {
 		
 	}
 
+
 	public function calling_data_save()
 	{
 
@@ -921,46 +922,44 @@ class Communication extends CI_Controller {
 
 
 
-	public function assignment_report(){
-
-			$role = $this->session->userdata['role'];
-
-			if($role == 'admin'){
-				$assignment = $this->db->select('am.*,am.id as id,c.name as cname, c.id as cid, a.admin_name as team')->from('assignment_master am')
-					->join('assignment aa', 'aa.assignment_id = am.id')
-					->join('campaign c', 'c.id = aa.campaign_id')
-					->join('admin a', 'a.admin_id = aa.team_id')
-					->group_by('aa.assignment_id')
-					->get()->result();
-			}
-			else{
-				$assignment = $this->db->select('am.*,am.id as id,c.name as cname, c.id as cid, a.admin_name as team')->from('assignment_master am')
+	public function assignment_report()
+	{
+		$role = $this->session->userdata['role'];
+		if ($role == 'admin') {
+			$assignment = $this->db->select('am.*, am.id as id, c.name as cname, c.id as cid, a.admin_name as team')
+				->from('assignment_master am')
 				->join('assignment aa', 'aa.assignment_id = am.id')
 				->join('campaign c', 'c.id = aa.campaign_id')
 				->join('admin a', 'a.admin_id = aa.team_id')
-				->where('aa.team_id',$this->session->userdata['admin_id'])
 				->group_by('aa.assignment_id')
+				->order_by('aa.created_at', 'DESC')
 				->get()->result();
-			}
-
-			
+		} else {
+			$assignment = $this->db->select('am.*, am.id as id, c.name as cname, c.id as cid, a.admin_name as team')
+				->from('assignment_master am')
+				->join('assignment aa', 'aa.assignment_id = am.id')
+				->join('campaign c', 'c.id = aa.campaign_id')
+				->join('admin a', 'a.admin_id = aa.team_id')
+				->where('aa.team_id', $this->session->userdata['admin_id'])
+				->group_by('aa.assignment_id')
+				->order_by('aa.created_at', 'DESC')
+				->get()->result();
+		}
 		$team = $this->db->select('*')->from('team')->get()->result();
 		$campaign = $this->db->select('*')->from('campaign')->get()->result();
 		$mode = $this->db->select('*')->from('mode')->get()->result();
 		$responses = $this->db->select('*')->from('responses')->get()->result();
 		$tags = $this->db->select('*')->from('tags')->get()->result();
-		$user = $this->db->select('*')->from('admin')->where('role','telecaller')->get()->result();
-
-			$this->load->view($this->folder."assignment_report",array(
-				'assignment' => $assignment,
-				'team' => $team,
-				'campaign' => $campaign,
-				'mode' => $mode,
-				'responses' => $responses,
-				'user' => $user,
-				'tags' => $tags
-			));
-
+		$user = $this->db->select('*')->from('admin')->where('role', 'telecaller')->get()->result();
+		$this->load->view($this->folder . "assignment_report", array(
+			'assignment' => $assignment,
+			'team' => $team,
+			'campaign' => $campaign,
+			'mode' => $mode,
+			'responses' => $responses,
+			'user' => $user,
+			'tags' => $tags
+		));
 	}
 
 
@@ -2086,260 +2085,366 @@ public function filter_exam()
 
 
 	}
-	
-	
+
+
 	public function team_report()
-    {
-        $team_member_id = $this->input->get('team_member');
-        $from_date = $this->input->get('from');
-        $to_date = $this->input->get('to');
-        $this->db->select('a.admin_name, am.id as assignment_id, am.assignment_name as assignment_title, am.assignment_start as assigned_date');
-        $this->db->from('assignment aa');
-        $this->db->join('assignment_master am', 'aa.assignment_id = am.id');
-        $this->db->join('admin a', 'a.admin_id = aa.team_id');
-        $this->db->order_by('am.assignment_start', 'ASC'); // order by assignment_start
-        if (!empty($team_member_id)) {
-            $this->db->where('a.admin_id', $team_member_id);
-        }
-        if (!empty($from_date)) {
-            $this->db->where('am.assignment_start >=', date('Y-m-d', strtotime($from_date)));
-        }
-        if (!empty($to_date)) {
-            $this->db->where('am.assignment_start <=', date('Y-m-d', strtotime($to_date)));
-        }
-        $this->db->order_by('am.assignment_start', 'ASC');
-        $assignments = $this->db->get()->result();
-        $user = $this->db->get('admin')->result();
-        $this->load->view($this->folder . "team_report", array(
-            'assignments' => $assignments,
-            'user' => $user
-        ));
-    }
-	
-	
-	 public function filter_team()
-    {
-        $team_member_id = $this->input->post('team_member');
-        $from_date = $this->input->post('from');
-        $to_date = $this->input->post('to');
-        $this->db->select('a.admin_name, am.id as assignment_id, am.assignment_name as assignment_title, am.assignment_start as assigned_date');
-        $this->db->from('assignment aa');
-        $this->db->join('assignment_master am', 'aa.assignment_id = am.id');
-        $this->db->join('admin a', 'a.admin_id = aa.team_id');
-        if (!empty($team_member_id)) {
-            $this->db->where('a.admin_id', $team_member_id);
-        }
-        if (!empty($from_date)) {
-            $this->db->where('am.assignment_start >=', date('Y-m-d', strtotime($from_date)));
-        }
-        if (!empty($to_date)) {
-            $this->db->where('am.assignment_start <=', date('Y-m-d', strtotime($to_date)));
-        }
-        $this->db->order_by('am.assignment_start', 'ASC');
-        $assignments = $this->db->get()->result();
-        // Prepare grouped data same as in view
-        $grouped = [];
-        foreach ($assignments as $a) {
-            $date = $a->assigned_date;
-            $key = $a->admin_name . '_' . $date;
-            if (!isset($grouped[$key])) {
-                $grouped[$key] = [
-                    'admin_name' => $a->admin_name,
-                    'date' => $date,
-                    'assignments' => []
-                ];
-            }
-            $assignment_id = $a->assignment_id;
-            if (!isset($grouped[$key]['assignments'][$assignment_id])) {
-                $grouped[$key]['assignments'][$assignment_id] = $a->assignment_title;
-            }
-        }
-        $sno = 1;
-        $html = '';
-        foreach ($grouped as $entry) {
-            $html .= '<tr>';
-            $html .= '<td>' . $sno++ . '</td>';
-            $html .= '<td>' . $entry['admin_name'] . '</td>';
-            $html .= '<td>' . date('d-m-Y', strtotime($entry['date'])) . '</td>';
-            $html .= '<td>';
-            foreach ($entry['assignments'] as $id => $title) {
-                $html .= '<button type="button" class="btn btn-sm btn-primary assignment-link" data-id="' . $id . '" style="margin-right: 5px; margin-bottom: 5px;">' . $title . '</button>';
-            }
-            $html .= '</td>';
-            $html .= '</tr>';
-        }
-        echo $html; // output only the table rows for ajax replacement
-    }
-	
-	
+	{
+		$team_member_id = $this->input->get('team_member');
+		$from_date = $this->input->get('from');
+		$to_date = $this->input->get('to');
+		// Fetch all assignments for assignment filter dropdown
+		$assignment_list = $this->db->select('id, assignment_name')
+			->order_by('assignment_name', 'ASC')
+			->get('assignment_master')
+			->result();
+		// Fetch all tags for tag filter dropdown
+		$tags = $this->db->select('*')->from('tags')->get()->result();
+		$user = $this->db->where('role', 'telecaller')
+			->order_by('admin_name', 'ASC')
+			->get('admin')
+			->result();
+		$assignments = [];
+		if (!empty($team_member_id) || !empty($from_date) || !empty($to_date) || !empty($assignment_id) || !empty($tag_id)) {
+			$this->db->select('a.admin_name, am.id as assignment_id, am.assignment_name as assignment_title, am.assignment_start as assigned_date');
+			$this->db->from('assignment aa');
+			$this->db->join('assignment_master am', 'aa.assignment_id = am.id');
+			$this->db->join('admin a', 'a.admin_id = aa.team_id');
+			$this->db->join('calling_data cd', 'cd.assignment_id = am.id', 'left');
+			$this->db->join('tags t', 't.tag_id = cd.tag', 'left');
+			$this->db->group_by(['a.admin_name', 'am.id', 'am.assignment_name', 'am.assignment_start']);
+			$this->db->order_by('am.assignment_start', 'ASC'); // order by assignment_start
+			if (!empty($team_member_id)) {
+				$this->db->where('a.admin_id', $team_member_id);
+			}
+			if (!empty($from_date)) {
+				$this->db->where('am.assignment_start >=', date('Y-m-d', strtotime($from_date)));
+			}
+			if (!empty($to_date)) {
+				$this->db->where('am.assignment_start <=', date('Y-m-d', strtotime($to_date)));
+			}
+			if (!empty($assignment_id)) {
+				$this->db->where('am.id', $assignment_id);
+			}
+			if (!empty($tag_id)) {
+				$this->db->where('t.tag_id', $tag_id);
+			}
+			$this->db->order_by('am.assignment_start', 'DESC');
+			$assignments = $this->db->get()->result();
+		}
+		// :white_check_mark: Pass actual assignment list
+		$this->load->view($this->folder . "team_report", array(
+			'assignments' => $assignments, // will be [] if no filter is applied
+			'user' => $user,
+			'assignment_list' => $assignment_list,
+			'tags' => $tags
+		));
+	}
+	public function filter_team()
+	{
+		$team_member_id = $this->input->post('team_member');
+		$from_date = $this->input->post('from');
+		$to_date = $this->input->post('to');
+		$tag_names = $this->input->post('tag_names'); // Now these are tag **names**, not IDs
+		$assignment_ids = $this->input->post('assignment_ids'); // array
+		// Step 1: If tags filter is present, get assignment IDs from calling_data matching these tags
+		$assignment_ids_from_tags = [];
+		if (!empty($tag_names) && is_array($tag_names)) {
+			$this->db->select('DISTINCT assignment_id');
+			$this->db->from('calling_data');
+			$this->db->group_start();
+			foreach ($tag_names as $i => $tag_name) {
+				$tag_name = trim($this->db->escape_str($tag_name));
+				if ($i === 0) {
+					$this->db->where("FIND_IN_SET('{$tag_name}', tag) !=", 0);
+				} else {
+					$this->db->or_where("FIND_IN_SET('{$tag_name}', tag) !=", 0);
+				}
+			}
+			$this->db->group_end();
+			$query = $this->db->get();
+			$assignment_ids_from_tags = array_column($query->result_array(), 'assignment_id');
+			if (empty($assignment_ids_from_tags)) {
+				// No assignments found with these tags, so no results
+				echo ''; // return empty result
+				return;
+			}
+		}
+		$this->db->select('a.admin_name, am.id as assignment_id, am.assignment_name as assignment_title, am.assignment_start as assigned_date');
+		$this->db->from('assignment aa');
+		$this->db->join('assignment_master am', 'aa.assignment_id = am.id');
+		$this->db->join('admin a', 'a.admin_id = aa.team_id');
+		// $this->db->join('calling_data cd', 'cd.team_id = a.admin_id', 'left');
+		// // Join calling_data for tag filtering
+		// if (!empty($tag_names) && is_array($tag_names)) {
+		//  $this->db->join('calling_data cd', 'cd.team_id = am.id', 'inner');
+		//  $this->db->group_start(); // start OR group for multiple tags
+		//  foreach ($tag_names as $i => $tag_name) {
+		//      $tag_name = $this->db->escape_str(trim($tag_name));
+		//      if ($i == 0) {
+		//          $this->db->where("FIND_IN_SET('{$tag_name}', cd.tag) !=", 0);
+		//      } else {
+		//          $this->db->or_where("FIND_IN_SET('{$tag_name}', cd.tag) !=", 0);
+		//      }
+		//  }
+		//  $this->db->group_end();
+		//  $this->db->group_by('am.id'); // avoid duplicates
+		// }
+		if (!empty($team_member_id)) {
+			$this->db->where('a.admin_id', $team_member_id);
+		}
+		if (!empty($from_date)) {
+			$this->db->where('am.assignment_start >=', date('Y-m-d', strtotime($from_date)));
+		}
+		if (!empty($to_date)) {
+			$this->db->where('am.assignment_start <=', date('Y-m-d', strtotime($to_date)));
+		}
+		// If tag filter was applied, restrict assignments to those found in calling_data
+		if (!empty($assignment_ids)) {
+			$this->db->where_in('am.id', $assignment_ids);
+		}
+		// if (!empty($tag_ids)) {
+		//  $this->db->where_in('cd.tag_id', $tag_ids); // Make sure your tag filter matches how tags are stored
+		// }
+		$this->db->order_by('am.assignment_start', 'DESC');
+		$assignments = $this->db->get()->result();
+		// // Prepare grouped data same as in view
+		// // Fetch all tags for mapping ids to names
+		// $tag_list = $this->db->select('tag_id, name')->order_by('name')->get('tags')->result();
+		// $tag_names = [];
+		// foreach ($tag_list as $tag) {
+		//  $tag_names[$tag->tag_id] = $tag->name;
+		// }
+		$grouped = [];
+		foreach ($assignments as $a) {
+			$date = $a->assigned_date;
+			$key = $a->admin_name . '_' . $date;
+			if (!isset($grouped[$key])) {
+				$grouped[$key] = [
+					'admin_name' => $a->admin_name,
+					'date' => $date,
+					'assignments' => []
+					// 'tags' => []
+				];
+			}
+			$grouped[$key]['assignments'][$a->assignment_id] = $a->assignment_title;
+		}
+		$sno = 1;
+		$html = '';
+		foreach ($grouped as $entry) {
+			$html .= '<tr>';
+			$html .= '<td>' . $sno++ . '</td>';
+			$html .= '<td>' . $entry['admin_name'] . '</td>';
+			// Tags column
+			// Tags column: here you can fetch tags from calling_data if needed
+			// Or leave as '-' since no direct tag linkage is fetched here
+			// $html .=  '<td>' . (!empty($entry['tags']) ? implode(', ', $entry['tags']) : 'No Tags') . '</td>';
+			$html .= '<td>' . date('d-m-Y', strtotime($entry['date'])) . '</td>';
+			$html .= '<td>';
+			foreach ($entry['assignments'] as $id => $title) {
+				$html .= '<button type="button" class="btn btn-sm btn-primary assignment-link" data-id="' . $id . '" style="margin-right: 5px; margin-bottom: 5px;">' . $title . '</button>';
+			}
+			$html .= '</td>';
+			$html .= '</tr>';
+		}
+		echo $html; // output only the table rows for ajax replacement
+	}
+
+
 	public function team_assignment_candidates()
-    {
-        $draw = intval($this->input->get("draw"));
-        $start = intval(1);
-        $length = intval(5);
-        $assignment_id = $this->input->post('data');
-        $query = $this->db->query("SELECT um.*,aa.created_at,aa.assign_id FROM assignment aa INNER JOIN assignment_master am ON am.id = aa.assignment_id INNER JOIN user_master um ON um.user_id=aa.user_id WHERE am.id = $assignment_id;");
-        $data = [];
-        $n = 0;
-        $comp = 0;
-        foreach ($query->result() as $r) {
-            $candidate_data = $this->db->select("*")->from("candidate_data")->where("mobile_verified_id = " . $r->user_id . " AND duplicate = 0")->get()->row();
-            $score_date = $this->db->select("*")->from("candidate_score_mba")->where("candidate_id = " . $r->user_id)->get()->row();
-            $fullname = "";
-            $corre_state = "";
-            $corre_city = "";
-            $email = "";
-            $parma_city = "";
-            $parma_state = "";
-            $gender = "";
-            $category = "";
-            $dob = "";
-            $university = "";
-            $appr_center_1 = "";
-            $gdpi_center_1 = "";
-            $study_center1 = "";
-            if ($candidate_data != "") {
-                $parma_state_data = $this->db->select("*")->from("states")->where("id = " . $candidate_data->parma_state . "")->get()->row();
-                $parma_city_data = $this->db->select("*")->from("cities")->where("id = " . $candidate_data->parma_city . "")->get()->row();
-                $corre_state_data = $this->db->select("*")->from("states")->where("id = " . $candidate_data->corre_state . "")->get()->row();
-                $corre_city_data = $this->db->select("*")->from("cities")->where("id = " . $candidate_data->corre_city . "")->get()->row();
-                if ($r->course_id == 1) {
-                    $course = "BBA";
-                }
-                if ($r->course_id == 2) {
-                    $course = "MBA";
-                }
-                if ($r->course_id == 1) {
-                    $fullname = "<a href='../journey/show_journey/$r->user_id' target='_blank'>" . $candidate_data->first_name . " " . $candidate_data->middle_name . " " . $candidate_data->last_name . "</a>";
-                }
-                if ($r->course_id == 2) {
-                    $fullname = "<a href='../journey/show_journey/$r->user_id' target='_blank'>" . $candidate_data->first_name . " " . $candidate_data->middle_name . " " . $candidate_data->last_name . "</a>";
-                }
-                $email = $candidate_data->email_id;
-                $gender = $candidate_data->gender;
-                $university = $candidate_data->academic_board;
-                $appr_center_1 = $candidate_data->appearing_center_1;
-                $appr_center_2 = $candidate_data->appearing_center_2;
-                $appr_center_3 = $candidate_data->appearing_center_3;
-                $appr_center_4 = $candidate_data->appearing_center_4;
-                $gdpi_center_1 = $candidate_data->gdpi_center_1;
-                $gdpi_center_2 = $candidate_data->gdpi_center_2;
-                $gdpi_center_3 = $candidate_data->gdpi_center_3;
-                $gdpi_center_4 = $candidate_data->gdpi_center_4;
-                $study_center1 = $candidate_data->study_centre_1;
-                $study_center2 = $candidate_data->study_centre_2;
-                $study_center3 = $candidate_data->study_centre_3;
-                $study_center4 = $candidate_data->study_centre_4;
-                $category = $candidate_data->category;
-                $dob = $candidate_data->dob;
-                $parma_state = $parma_state_data->name;
-                $parma_city = $parma_city_data->name;
-                $corre_state = $corre_state_data->name;
-                $corre_city = $corre_city_data->name ?? '';
-                $college = $candidate_data->academic_intermediate;
-                $academic_year = $candidate_data->academic_year;
-                $academic_mark_obt = $candidate_data->academic_mark_obt;
-                $academic_mark_max = $candidate_data->academic_mark_max;
-                $academic_percentage = $candidate_data->academic_percentage;
-                $obt = $academic_mark_obt . '/' . $academic_mark_max;
-                $parma_address = $candidate_data->parma_appertment . " " . $candidate_data->parma_colony . " " . $candidate_data->parma_area;
-                $corre_address = $candidate_data->corre_appertment . " " . $candidate_data->corre_colony . " " . $candidate_data->corre_area;
-                $exam_status = $this->db->select("*")->from("candidate_exam")->where("user_id = " . $r->user_id . "")->get()->row();
-                $this->db->select('*');
-                $this->db->from('candidate_exam CE');
-                $this->db->join('exam_master em', 'em.id = CE.exam_id');
-                $this->db->where('CE.user_id', $r->user_id);
-                $exam = $this->db->get()->result();
-                $examName = "<ul>";
-                foreach ($exam as $key => $exams) {
-                    $examName .=  '<li>' . $exams->exam_name . '</li>';
-                }
-                $examName .= '</ul>';
-            }
-            $n++;
-            if ($r->amount) {
-                $amount = ($r->amount) / 100;
-            } else {
-                $amount = 0;
-            }
-            $tranid = $r->razorpay_trans_id;
-            if ($r->login_status == 1) {
-                $sts_btn = "<span class='btn btn-xs btn-danger'> Mobile Verified</span>";
-            }
-            if ($r->login_status == 2) {
-                $sts_btn = "<span class='btn btn-xs btn-success'> Paid</span>";
-            }
-            $admit_btn = "<a href='generate_admit_card/$r->user_id' target='_blank' class='btn btn-danger btn-xs'>Admit Card</a>";
-            $checked = "";
-            if ($exam_status->id ?? 0 != '') {
-                $checked = 'checked = checked; disabled';
-            }
-            if ($score_date) {
-                $scoreA = "Name:" . $score_date->score_name ?? '';
-                $scoreB = "<br/>Score: " . $score_date->score_marks ?? '';
-                $scoreC = "<br/>Year: " .  $score_date->score_year ?? '';
-            } else {
-                $scoreA = "";
-                $scoreB = "";
-                $scoreC = "";
-            }
-            if ($this->session->userdata['role'] == 'telecaller') {
-                $calling_check = $this->db->select("*")->from("calling_data")->where("assign_id = " . $r->assign_id . "")->get()->row();
-                if ($calling_check) {
-                    $btn = "<b>Done</b>";
-                    $comp++;
-                } else {
-                    $btn = '<input type="checkbox" value="' . $r->user_id . '" assign-id="' . $r->assign_id . '" data-id="' . $r->user_id . '" class="exam_status checkbox" name="user_id[]"/>';
-                }
-            } else {
-                $calling_check = $this->db->select("*")->from("calling_data")->where("assign_id = " . $r->assign_id . "")->get()->row();
-                if ($calling_check) {
-                    $btn = "";
-                    $comp++;
-                } else {
-                    $btn = '';
-                }
-            }
-            $candidate_information = '<b>Enroll No.: </b> 0000' . $r->user_id . '<br/><b>Full Name: </b>' . $fullname . '<br/><b>Mobile :</b> ' . $r->user_mobile . '<br/><b>Father Name: </b>' . $candidate_data->father_name . '<br/><b>Mother Name: </b>' . $candidate_data->mother_name . '<br/><b>DOB: </b>' . $dob . '<br/><b>Email: </b>' . $email . '<br/><b>Gender: </b>' . $gender;
-            $academic_information = '<b>Course: </b>' . $course . '<br/><b>Study Center: </b>' . $study_center1 . '<br/><b>Category: </b>' . $category . '<br/><b>State: </b>' . $parma_state . '<br/><b>City: </b>' . $parma_city . '<br/><b>Enroll DateTime: </b>' . date("d-M-Y", strtotime($r->created_date));
-            $communication = $this->db->query("SELECT cd.*,admin.admin_name as tname,mode.name as mname, campaign.name as cname,responses.name as rname from calling_data cd inner join admin on admin.admin_id = cd.team_id inner join mode on mode.id = cd.mode inner join campaign on campaign.id = cd.campaign_id inner join responses on responses.id = cd.response_id where cd.user_id='" . $r->user_id . "' order by call_date asc")->result_array();
-            $communicate = "";
-            foreach ($communication as $key => $comm) {
-                $tags = "";
-                $tag_array = explode(',', $comm['tag']);
-                foreach ($tag_array as $key => $tag) {
-                    $tag_query = $this->db->query("select * from tags where tag_id = $tag")->row();
-                    $tags = '<span class="badge badge-primary">' . $tag_query->name ?? '' . '</span>';
-                }
-                $communicate = '<div class="tracking-item"><div class="tracking-date"><b>DateTime: </b>' . date('M d, Y', strtotime($comm['call_date'])) . '<span> ' . date('h:i A', strtotime($comm['call_time'])) . '</span></div>
-                    <div class="tracking-content">
-                    <b>Campaign: </b><span style="color:red; font-size:18px; padding-bottom:10px;">' . $comm['cname'] . '</span><br/>
-                    <b>Calling Team: </b>' . $comm['tname'] . '<br/>
-                    <b>Communication Mode: </b>' . $comm['mname'] . '<br/>
-                    <b>Call Action: </b>' . $comm['call_action'] . '<br/>
-                    <b>Call Response: </b>' . $comm['rname'] . '<br/>
-                    <b>Remark: </b>' . $comm['notes'] . '<br/>
-                    <b>Tags: </b>' . $tags . '
-                    </div>
-                    </div>';
-            }
-            $data[] = array(
-                $n . $btn,
-                $candidate_information,
-                $academic_information,
-                $communicate,
-            );
-        }
-        $result = array(
-            "draw" => $draw,
-            "recordsTotal" => $query->num_rows(),
-            "recordsFiltered" => $query->num_rows(),
-            "recordsComplete" => $comp,
-            "data" => $data
-        );
-        echo json_encode($result);
-        exit();
-    }
+	{
+		$draw = intval($this->input->get("draw"));
+		$start = intval(1);
+		$length = intval(5);
+		$assignment_id = $this->input->post('data');
+		$from_date = $this->input->post('from');  // format: YYYY-MM-DD
+		$to_date = $this->input->post('to');
+		// $query = $this->db->query("SELECT um.*,aa.created_at,aa.assign_id FROM assignment aa INNER JOIN assignment_master am ON am.id = aa.assignment_id INNER JOIN user_master um ON um.user_id=aa.user_id WHERE am.id = $assignment_id;");
+		// Base query with placeholders and date filter if given
+		$this->db->select("um.*, aa.created_at, aa.assign_id");
+		$this->db->from("assignment aa");
+		$this->db->join("assignment_master am", "am.id = aa.assignment_id");
+		$this->db->join("calling_data cd", "cd.user_id = aa.user_id");
+		$this->db->join("user_master um", "um.user_id = aa.user_id");
+		$this->db->where("am.id", $assignment_id);
+		if (!empty($from_date) && !empty($to_date)) {
+			// Filter by created_at date range (adjust the column name if needed)
+			$this->db->where("DATE(cd.call_date) >=", $from_date);
+			$this->db->where("DATE(cd.call_date) <=", $to_date);
+		}
+		$query = $this->db->get();
+		$data = [];
+		$n = 0;
+		$comp = 0;
+		foreach ($query->result() as $r) {
+			$candidate_data = $this->db->select("*")->from("candidate_data")->where("mobile_verified_id = " . $r->user_id . " AND duplicate = 0")->get()->row();
+			$score_date = $this->db->select("*")->from("candidate_score_mba")->where("candidate_id = " . $r->user_id)->get()->row();
+			$fullname = "";
+			$corre_state = "";
+			$corre_city = "";
+			$email = "";
+			$parma_city = "";
+			$parma_state = "";
+			$gender = "";
+			$category = "";
+			$dob = "";
+			$university = "";
+			$appr_center_1 = "";
+			$gdpi_center_1 = "";
+			$study_center1 = "";
+			if ($candidate_data != "") {
+				$parma_state_data = $this->db->select("*")->from("states")->where("id = " . $candidate_data->parma_state . "")->get()->row();
+				$parma_city_data = $this->db->select("*")->from("cities")->where("id = " . $candidate_data->parma_city . "")->get()->row();
+				$corre_state_data = $this->db->select("*")->from("states")->where("id = " . $candidate_data->corre_state . "")->get()->row();
+				$corre_city_data = $this->db->select("*")->from("cities")->where("id = " . $candidate_data->corre_city . "")->get()->row();
+				if ($r->course_id == 1) {
+					$course = "BBA";
+				}
+				if ($r->course_id == 2) {
+					$course = "MBA";
+				}
+				if ($r->course_id == 1) {
+					$fullname = "<a href='../journey/show_journey/$r->user_id' target='_blank'>" . $candidate_data->first_name . " " . $candidate_data->middle_name . " " . $candidate_data->last_name . "</a>";
+				}
+				if ($r->course_id == 2) {
+					$fullname = "<a href='../journey/show_journey/$r->user_id' target='_blank'>" . $candidate_data->first_name . " " . $candidate_data->middle_name . " " . $candidate_data->last_name . "</a>";
+				}
+				$email = $candidate_data->email_id;
+				$gender = $candidate_data->gender;
+				$university = $candidate_data->academic_board;
+				$appr_center_1 = $candidate_data->appearing_center_1;
+				$appr_center_2 = $candidate_data->appearing_center_2;
+				$appr_center_3 = $candidate_data->appearing_center_3;
+				$appr_center_4 = $candidate_data->appearing_center_4;
+				$gdpi_center_1 = $candidate_data->gdpi_center_1;
+				$gdpi_center_2 = $candidate_data->gdpi_center_2;
+				$gdpi_center_3 = $candidate_data->gdpi_center_3;
+				$gdpi_center_4 = $candidate_data->gdpi_center_4;
+				$study_center1 = $candidate_data->study_centre_1;
+				$study_center2 = $candidate_data->study_centre_2;
+				$study_center3 = $candidate_data->study_centre_3;
+				$study_center4 = $candidate_data->study_centre_4;
+				$category = $candidate_data->category;
+				$dob = $candidate_data->dob;
+				$parma_state = $parma_state_data->name;
+				$parma_city = $parma_city_data->name;
+				$corre_state = $corre_state_data->name;
+				$corre_city = $corre_city_data->name ?? '';
+				$college = $candidate_data->academic_intermediate;
+				$academic_year = $candidate_data->academic_year;
+				$academic_mark_obt = $candidate_data->academic_mark_obt;
+				$academic_mark_max = $candidate_data->academic_mark_max;
+				$academic_percentage = $candidate_data->academic_percentage;
+				$obt = $academic_mark_obt . '/' . $academic_mark_max;
+				$parma_address = $candidate_data->parma_appertment . " " . $candidate_data->parma_colony . " " . $candidate_data->parma_area;
+				$corre_address = $candidate_data->corre_appertment . " " . $candidate_data->corre_colony . " " . $candidate_data->corre_area;
+				$exam_status = $this->db->select("*")->from("candidate_exam")->where("user_id = " . $r->user_id . "")->get()->row();
+				$this->db->select('*');
+				$this->db->from('candidate_exam CE');
+				$this->db->join('exam_master em', 'em.id = CE.exam_id');
+				$this->db->where('CE.user_id', $r->user_id);
+				$exam = $this->db->get()->result();
+				$examName = "<ul>";
+				foreach ($exam as $key => $exams) {
+					$examName .=  '<li>' . $exams->exam_name . '</li>';
+				}
+				$examName .= '</ul>';
+			}
+			$n++;
+			if ($r->amount) {
+				$amount = ($r->amount) / 100;
+			} else {
+				$amount = 0;
+			}
+			$tranid = $r->razorpay_trans_id;
+			if ($r->login_status == 1) {
+				$sts_btn = "<span class='btn btn-xs btn-danger'> Mobile Verified</span>";
+			}
+			if ($r->login_status == 2) {
+				$sts_btn = "<span class='btn btn-xs btn-success'> Paid</span>";
+			}
+			$admit_btn = "<a href='generate_admit_card/$r->user_id' target='_blank' class='btn btn-danger btn-xs'>Admit Card</a>";
+			$checked = "";
+			if ($exam_status->id ?? 0 != '') {
+				$checked = 'checked = checked; disabled';
+			}
+			if ($score_date) {
+				$scoreA = "Name:" . $score_date->score_name ?? '';
+				$scoreB = "<br/>Score: " . $score_date->score_marks ?? '';
+				$scoreC = "<br/>Year: " .  $score_date->score_year ?? '';
+			} else {
+				$scoreA = "";
+				$scoreB = "";
+				$scoreC = "";
+			}
+			if ($this->session->userdata['role'] == 'telecaller') {
+				$calling_check = $this->db->select("*")->from("calling_data")->where("assign_id = " . $r->assign_id . "")->get()->row();
+				if ($calling_check) {
+					$btn = "<b>Done</b>";
+					$comp++;
+				} else {
+					$btn = '<input type="checkbox" value="' . $r->user_id . '" assign-id="' . $r->assign_id . '" data-id="' . $r->user_id . '" class="exam_status checkbox" name="user_id[]"/>';
+				}
+			} else {
+				$calling_check = $this->db->select("*")->from("calling_data")->where("assign_id = " . $r->assign_id . "")->get()->row();
+				if ($calling_check) {
+					$btn = "";
+					$comp++;
+				} else {
+					$btn = '';
+				}
+			}
+			// if (strtotime($r->created_at) >= strtotime($from_date) && strtotime($r->created_at) <= strtotime($to_date)) {
+			$candidate_information = '<b>Enroll No.: </b> 0000' . $r->user_id . '<br/><b>Full Name: </b>' . $fullname . '<br/><b>Mobile :</b> ' . $r->user_mobile . '<br/><b>Father Name: </b>' . $candidate_data->father_name . '<br/><b>Mother Name: </b>' . $candidate_data->mother_name . '<br/><b>DOB: </b>' . $dob . '<br/><b>Email: </b>' . $email . '<br/><b>Gender: </b>' . $gender;
+			// } else {
+			//  $candidate_information = '';
+			// }
+			// if (strtotime($r->created_at) >= strtotime($from_date) && strtotime($r->created_at) <= strtotime($to_date)) {
+			$academic_information = '<b>Course: </b>' . $course . '<br/><b>Study Center: </b>' . $study_center1 . '<br/><b>Category: </b>' . $category . '<br/><b>State: </b>' . $parma_state . '<br/><b>City: </b>' . $parma_city . '<br/><b>Enroll DateTime: </b>' . date("d-M-Y", strtotime($r->created_at));
+			// } else {
+			//  $academic_information = '';
+			// }
+			//      $communication = $this->db->query("SELECT cd.*,admin.admin_name as tname,mode.name as mname, campaign.name as cname,responses.name as rname from calling_data cd inner join admin on admin.admin_id = cd.team_id inner join mode on mode.id = cd.mode inner join campaign on campaign.id = cd.campaign_id inner join responses on responses.id = cd.response_id where cd.user_id='" . $r->user_id . "' AND cd.call_date BETWEEN '$from_date' AND '$to_date'
+			// ORDER BY call_date ASC")->result_array();
+			//      $communicate = "";
+
+			$communication = $this->db->query("SELECT cd.*,admin.admin_name as tname,mode.name as mname, campaign.name as cname,responses.name as rname from calling_data cd inner join admin on admin.admin_id = cd.team_id inner join mode on mode.id = cd.mode inner join campaign on campaign.id = cd.campaign_id inner join responses on responses.id = cd.response_id where cd.user_id='" . $r->user_id . "' ORDER BY call_date ASC")->result_array();
+			$communicate = "";
+			foreach ($communication as $key => $comm) {
+				$tags = "";
+				$tag_array = explode(',', $comm['tag']);
+				foreach ($tag_array as $key => $tag) {
+					$tag_query = $this->db->query("select * from tags where tag_id = $tag")->row();
+					$tags = '<span class="badge badge-primary">' . $tag_query->name ?? '' . '</span>';
+				}
+				$communicate = '<div class="tracking-item"><div class="tracking-date"><b>DateTime: </b>' . date('M d, Y', strtotime($comm['call_date'])) . '<span> ' . date('h:i A', strtotime($comm['call_time'])) . '</span></div>
+                            <div class="tracking-content">
+                            <b>Campaign: </b><span style="color:red; font-size:18px; padding-bottom:10px;">' . $comm['cname'] . '</span><br/>
+                            <b>Calling Team: </b>' . $comm['tname'] . '<br/>
+                            <b>Communication Mode: </b>' . $comm['mname'] . '<br/>
+                            <b>Call Action: </b>' . $comm['call_action'] . '<br/>
+                            <b>Call Response: </b>' . $comm['rname'] . '<br/>
+                            <b>Remark: </b>' . $comm['notes'] . '<br/>
+                            <b>Tags: </b>' . $tags . '
+                            </div>
+                            </div>';
+			}
+			$data[] = array(
+				$n . $btn,
+				$candidate_information,
+				$academic_information,
+				$communicate,
+			);
+		}
+		$result = array(
+			"draw" => $draw,
+			"recordsTotal" => $query->num_rows(),
+			"recordsFiltered" => $query->num_rows(),
+			"recordsComplete" => $comp,
+			"data" => $data
+		);
+		echo json_encode($result);
+		exit();
+	}
    
 	
 	public function get_calling_data(){
@@ -2349,7 +2454,150 @@ public function filter_exam()
 		echo json_encode($callingdata);
 
 	}
-	
 
+	public function filter_exam_candidate_search()
+	{
+		$draw = intval($this->input->post("draw"));
+		$start = intval($this->input->post("start"));
+		$length = intval($this->input->post("length"));
+		$filter_where = $this->input->post("filter_where");
+		// Parse filter_where to detect exam_id only filter (basic check)
+		$onlyExamFilter = false;
+		$exam_id = null;
+		if ($filter_where) {
+			// Try to extract exam_id condition from filter_where string, e.g. "ce.exam_id = 1"
+			if (preg_match('/ce\.exam_id\s*=\s*(\d+)/', $filter_where, $matches)) {
+				$exam_id = intval($matches[1]);
+				// Check if filter_where contains anything else besides exam_id condition
+				// e.g. does filter_where only contain "ce.exam_id = 1"
+				$withoutExamId = preg_replace('/ce\.exam_id\s*=\s*\d+/', '', $filter_where);
+				$withoutExamId = trim($withoutExamId, " \t\n\r\0\x0BAND"); // trim AND and spaces
+				if ($withoutExamId == '') {
+					$onlyExamFilter = true;
+				}
+			}
+		}
+		$baseWhere = "ca.duplicate = 0 AND um.login_status = 2";
+		if ($onlyExamFilter && $exam_id !== null) {
+			// Fetch no_of_candidates from exam_master table for this exam_id
+			$exam_data = $this->db->select('no_of_candidates')
+				->from('exam_master')
+				->where('exam_id', $exam_id)
+				->get()
+				->row();
+			$total_candidates = $exam_data ? intval($exam_data->no_of_candidate) : 0;
+			// For data, fetch actual paginated candidates matching exam filter
+			$where = "WHERE $baseWhere AND ce.exam_id = $exam_id";
+			$query = $this->db->query("SELECT um.*, ca.*, ce.exam_id, ce.id as linkid, cr.* FROM candidate_data ca INNER JOIN user_master um ON um.user_id = ca.mobile_verified_id INNER JOIN candidate_exam ce ON ce.user_id = um.user_id LEFT JOIN candidate_result cr ON cr.link_id = ce.id $where LIMIT $start, $length ");
+			$data = [];
+			foreach ($query->result() as $r) {
+				$course = $r->course_id == 1 ? "BBA" : ($r->course_id == 2 ? "MBA" : "");
+				$roll_no = '0000' . $r->user_id;
+				$study_center = $r->study_centre_1 ?? '';
+				$score_data = $this->db->select("*")
+					->from("candidate_score_mba")
+					->where("candidate_id", $r->user_id)
+					->get()->row();
+				if ($r->course_id == 1) {
+					$fullname = "<a href='show_form_bba/$r->user_id' target='_blank'>" . $r->first_name . " " . $r->middle_name . " " . $r->last_name . "</a>";
+				}
+				if ($r->course_id == 2) {
+					$fullname = "<a href='show_form_mba/$r->user_id' target='_blank'>" . $r->first_name . " " .
+						$r->middle_name . " " . $r->last_name . "</a>";
+				}
+				$score = $score_data
+					? "Name: {$score_data->score_name}<br>Score: {$score_data->score_marks}<br>Year: {$score_data->score_year}"
+					: '';
+				$parma_state = $this->db->where('id', $r->parma_state)->get('states')->row()->name ?? '';
+				$parma_city = $this->db->where('id', $r->parma_city)->get('cities')->row()->name ?? '';
+				$checkbox = '<input type="checkbox" class="select_candidate" value="' . $r->user_id . '">';
+				$fullname = "<a href='/$r->user_id' target='_blank'>" . $r->first_name . " " . $r->middle_name . " " . $r->last_name . "</a>";
+				$data[] = [
+					$checkbox,
+					$roll_no,
+					$course,
+					$study_center,
+					$score,
+					$fullname,
+					$r->user_mobile ?? '',
+					$r->father_name ?? '',
+					$r->mother_name ?? '',
+					$r->dob ?? '',
+					$r->email_id ?? '',
+					$r->gender ?? '',
+					$r->category ?? '',
+					$r->religion ?? '',
+					$parma_state,
+					$parma_city,
+					$r->post_date
+				];
+			}
+			$result = [
+				"draw" => $draw,
+				"recordsTotal" => $total_candidates,
+				"recordsFiltered" => $total_candidates,
+				"data" => $data
+			];
+		} else {
+			// Usual filter logic (multiple filters or no filters)
+			$where = "WHERE $baseWhere";
+			if (!empty($filter_where)) {
+				$where .= " AND ($filter_where)";
+			}
+			$totalCountQuery = $this->db->query("SELECT COUNT(*) as cnt FROM candidate_data ca INNER JOIN user_master um ON um.user_id = ca.mobile_verified_id INNER JOIN candidate_exam ce ON ce.user_id = um.user_id LEFT JOIN candidate_result cr ON cr.link_id = ce.id $where ");
+			$recordsTotal = $totalCountQuery->row()->cnt;
+			$query = $this->db->query("SELECT um.*, ca.*, ce.exam_id, ce.id as linkid, cr.* FROM candidate_data ca INNER JOIN user_master um ON um.user_id = ca.mobile_verified_id INNER JOIN candidate_exam ce ON ce.user_id = um.user_id LEFT JOIN candidate_result cr ON cr.link_id = ce.id $where LIMIT $start, $length ");
+			$data = [];
+			foreach ($query->result() as $r) {
+				$course = $r->course_id == 1 ? "BBA" : ($r->course_id == 2 ? "MBA" : "");
+				$roll_no = '0000' . $r->user_id;
+				$study_center = $r->study_centre_1 ?? '';
+				$score_data = $this->db->select("*")
+					->from("candidate_score_mba")
+					->where("candidate_id", $r->user_id)
+					->get()->row();
+				if ($r->course_id == 1) {
+					$fullname = "<a href='show_form_bba/$r->user_id' target='_blank'>" . $r->first_name . " " . $r->middle_name . " " . $r->last_name . "</a>";
+				}
+				if ($r->course_id == 2) {
+					$fullname = "<a href='show_form_mba/$r->user_id' target='_blank'>" . $r->first_name . " " . $r->middle_name . " " . $r->last_name . "</a>";
+				}
+				$score = $score_data
+					? "Name: {$score_data->score_name}<br>Score: {$score_data->score_marks}<br>Year: {$score_data->score_year}"
+					: '';
+				$parma_state = $this->db->where('id', $r->parma_state)->get('states')->row()->name ?? '';
+				$parma_city = $this->db->where('id', $r->parma_city)->get('cities')->row()->name ?? '';
+				$checkbox = '<input type="checkbox" class="select_candidate" value="' . $r->user_id . '">';
+				$fullname = "<a href='show_from_bba/$r->user_id' target='_blank'>" . $r->first_name . " " . $r->middle_name . " " . $r->last_name . "</a>";
+				$data[] = [
+					$checkbox,
+					$roll_no,
+					$course,
+					$study_center,
+					$score,
+					$fullname,
+					$r->user_mobile ?? '',
+					$r->father_name ?? '',
+					$r->mother_name ?? '',
+					$r->dob ?? '',
+					$r->email_id ?? '',
+					$r->gender ?? '',
+					$r->category ?? '',
+					$r->religion ?? '',
+					$parma_state,
+					$parma_city,
+					$r->post_date
+				];
+			}
+			$result = [
+				"draw" => $draw,
+				"recordsTotal" => $recordsTotal,
+				"recordsFiltered" => $recordsTotal,
+				"data" => $data
+			];
+		}
+		echo json_encode($result);
+		exit();
+	}
 	
 }	

@@ -29,7 +29,7 @@
 
     <!-- Correct TinyMCE CDN with version and valid API key -->
     <!-- Correct TinyMCE CDN with version and valid API key -->
-<script src="https://cdn.tiny.cloud/1/k0ud6ova6zim15fcfyjhcqo5irdp4tgok5hr4zyfcr1w1xee/tinymce/7/tinymce.min.js" referrerpolicy="origin"></script>
+    <script src="https://cdn.tiny.cloud/1/k0ud6ova6zim15fcfyjhcqo5irdp4tgok5hr4zyfcr1w1xee/tinymce/7/tinymce.min.js" referrerpolicy="origin"></script>
 
 
 
@@ -62,10 +62,6 @@
             }
         });
     </script>
-
-    <!-- select2 cdn links -->
-    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
 </head>
 
@@ -227,6 +223,89 @@
 
         <?php $this->load->view('../layout/footer.php'); ?>
 
+        <script type="text/javascript" language="javascript" src="https://cdn.datatables.net/buttons/1.6.1/js/dataTables.buttons.min.js"></script>
+        <script type="text/javascript" language="javascript" src="https://cdn.datatables.net/buttons/1.6.1/js/buttons.flash.min.js"></script>
+        <script type="text/javascript" language="javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
+        <script type="text/javascript" language="javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
+        <script type="text/javascript" language="javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
+        <script type="text/javascript" language="javascript" src="https://cdn.datatables.net/buttons/1.6.1/js/buttons.html5.min.js"></script>
+        <script type="text/javascript" language="javascript" src="https://cdn.datatables.net/buttons/1.6.1/js/buttons.print.min.js"></script>
+
+
+
+
+        <div class="modal fade" id="category-create-modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true" data-backdrop="static" data-keyboard="false" style="z-index: 999999;">
+            <div class="modal-dialog modal-dialog-centered modal-sm" role="document" style="margin-top: 15%;">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="exampleModalLongTitle">Create Category</h5>
+                        <span style="position: absolute; top: 15px; right: 15px; cursor: pointer;"><i class="fa fa-close fa-close-category"></i></span>
+                    </div>
+                    <div class="modal-body">
+                        <form id="save-category">
+                            <input type="text" id="new_category" name="category-create" class="form-control" required="">
+                            <br />
+                            <button class="btn btn-danger" id="submitButton">Create</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal fade" id="edit" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="exampleModalLongTitle">Edit</h5>
+
+                    </div>
+                    <div class="modal-body">
+                        <form action="edit_worklogs" method="POST">
+                            <input type="hidden" name="edit_id" id="edit_id">
+                            <div class="form-group">
+                                <label>Title <span style='color:red;'>*</span></label>
+                                <input type="text" class="form-control" id="title_edit" name="title_edit" value="" required="" />
+                            </div>
+
+                            <div class="form-group">
+                                <label>Team Members</label>
+                                <select id="edit_team_members" name="team_member_name[]" class="form-control select2" multiple>
+                                    <?php foreach ($team_members as $member): ?>
+                                        <option value="<?= $member->admin_name ?>"><?= $member->admin_name ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Categories</label>
+                                <select id="edit_categories" name="category[]" class="form-control select2 category" multiple>
+                                    <?php foreach ($categories as $category): ?>
+                                        <option value="<?= $category->name ?>"><?= $category->name ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Date <span style='color:red;'>*</span></label>
+                                <input type="date" id="date_edit" class="form-control" name="date_edit" required="" />
+
+                            </div>
+
+                            <div class="form-group">
+                                <label>Description </label>
+                                <textarea type="text" class="form-control" id="edit-description" name="description_edit"></textarea>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary">Update changes</button>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <script>
             $(document).ready(function() {
                 $("#loading").hide();
@@ -303,80 +382,6 @@
                 });
             });
         </script>
-
-
-        <div class="modal fade" id="category-create-modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true" data-backdrop="static" data-keyboard="false" style="z-index: 999999;">
-            <div class="modal-dialog modal-dialog-centered modal-sm" role="document" style="margin-top: 15%;">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="exampleModalLongTitle">Create Category</h5>
-                        <span style="position: absolute; top: 15px; right: 15px; cursor: pointer;"><i class="fa fa-close fa-close-category"></i></span>
-                    </div>
-                    <div class="modal-body">
-                        <form id="save-category">
-                            <input type="text" id="new_category" name="category-create" class="form-control" required="">
-                            <br />
-                            <button class="btn btn-danger" id="submitButton">Create</button>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="modal fade" id="edit" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
-            <div class="modal-dialog modal-dialog-centered" role="document">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="exampleModalLongTitle">Edit</h5>
-
-                    </div>
-                    <div class="modal-body">
-                        <form action="edit_worklogs" method="POST">
-                            <input type="hidden" name="edit_id" id="edit_id">
-                            <div class="form-group">
-                                <label>Title <span style='color:red;'>*</span></label>
-                                <input type="text" class="form-control" id="title_edit" name="title_edit" value="" required="" />
-                            </div>
-
-                            <div class="form-group">
-                                <label>Team Members</label>
-                                <select id="edit_team_members" name="team_member_name[]" class="form-control select2" multiple>
-                                    <?php foreach ($team_members as $member): ?>
-                                        <option value="<?= $member->admin_name ?>"><?= $member->admin_name ?></option>
-                                    <?php endforeach; ?>
-                                </select>
-                            </div>
-
-                            <div class="form-group">
-                                <label>Categories</label>
-                                <select id="edit_categories" name="category[]" class="form-control select2 category" multiple>
-                                    <?php foreach ($categories as $category): ?>
-                                        <option value="<?= $category->name ?>"><?= $category->name ?></option>
-                                    <?php endforeach; ?>
-                                </select>
-                            </div>
-
-                            <div class="form-group">
-                                <label>Date <span style='color:red;'>*</span></label>
-                                <input type="date" id="date_edit" class="form-control" name="date_edit" required="" />
-
-                            </div>
-
-                            <div class="form-group">
-                                <label>Description </label>
-                                <textarea type="text" class="form-control" id="edit-description" name="description_edit"></textarea>
-                            </div>
-
-                            <button type="submit" class="btn btn-primary">Update changes</button>
-                        </form>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
 
         <script>
             $(document).ready(function() {
@@ -461,7 +466,30 @@
             });
         </script>
 
+        <script>
+            $(document).ready(function() {
+                $('#sample_data').DataTable({
+                    "fixedHeader": true,
+                    "bPaginate": false,
+                    "bLengthChange": false,
+                    "bFilter": false,
+                    "bSort": true,
+                    "order": [0, "asc"],
+                    "bInfo": true,
+                    "bAutoWidth": false,
+                    "searching": true,
+                    "bRetreive": true,
+                    "destroy": true,
 
+                    dom: 'Bfrtip',
+                    lengthMenu: [
+                        [25, 50, -1],
+                        ['25 rows', '50 rows', 'Show all']
+                    ],
+                    buttons: ['copy', 'csv', 'excel', 'pdf', 'print']
+                });
+            });
+        </script>
 
         <style>
             .bootstrap-select:not([class*="col-"]):not([class*="form-control"]):not(.input-group-btn) {
