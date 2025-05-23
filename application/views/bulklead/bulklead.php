@@ -103,9 +103,9 @@
 
                                     <div class="row">
                                         <div class="col-sm-12">
-                                            <a href="<?= base_url('bulklead/download_sample') ?>" id="downloadSampleBtn" class="btn btn-success" style="margin-bottom: 20px;" >Download Sample File</a>
+                                            <a href="<?= base_url('bulklead/download_sample') ?>" id="downloadSampleBtn" class="btn btn-success" style="margin-bottom: 20px;">Download Sample File</a>
 
-                                            <form method="post" action="upload_data">
+                                            <form id="upload_datafile" method="post" action="upload_data">
                                                 <div class="form-group">
                                                     <label>Select Title: <span style='color:red;'>*</span></label>
                                                     <select name="title" class="form-control" id="title_select" required="">
@@ -168,62 +168,66 @@
 
 
         <script>
-            $('#saveBtn').click(function() {
-                let title = $('#title').val().trim();
-                let source = $('#source').val().trim();
+            $(document).ready(function() {
+                $('#masterForm').on('submit', function(e) {
+                    e.preventDefault();
+                    let title = $('#title').val().trim();
+                    let source = $('#source').val().trim();
 
-                $.ajax({
-                    url: '<?= site_url("bulklead/create_master") ?>',
-                    type: 'POST',
-                    data: {
-                        title: title,
-                        source: source,
-                        // save: true
-                    },
-                    success: function(response) {
-                        if (response.status === 'success') {
-                            $('#masterForm')[0].reset();
-                            alert(response.message); // or show success message in your UI
-                            // Optionally reload the source dropdown here
-                            loadSourcesDropdown();
-                        } else {
-                            alert(response.message);
+                    $.ajax({
+                        url: '<?= site_url("bulklead/create_master") ?>',
+                        type: 'POST',
+                        data: {
+                            title: title,
+                            source: source
+                        },
+                        success: function(response) {
+                            var data = JSON.parse(response);
+                            if (data.status === 'success') {
+                                $('#masterForm')[0].reset();
+                                alert(data.message); // or show success message in your UI
+                                // Optionally reload the source dropdown here
+                                loadSourcesDropdown();
+                            } else {
+                                alert(data.message);
+                            }
+                        },
+                        error: function() {
+                            $('#message').html('<p style="color:red;">An error occurred. Please try again.</p>');
                         }
-                    },
-                    error: function() {
-                        $('#message').html('<p style="color:red;">An error occurred. Please try again.</p>');
-                    }
+                    });
                 });
+
+
+                $('#upload_datafile').on('submit', function(e) {
+                    e.preventDefault();
+
+                    var source = $('#title_select').val();
+                    var fileInput = $('#upload_file')[0];
+
+                    var formData = new FormData();
+                    formData.append('title', source);
+                    formData.append('upload_file', fileInput.files[0]);
+
+                    $.ajax({
+                        url: '<?= site_url("bulklead/upload_data") ?>',
+                        type: 'POST',
+                        data: formData,
+                        contentType: false,
+                        processData: false,
+                        success: function(response) {
+                            // $('#message').html('<p style="color:green;">' + response.message + '</p>');
+                            // Optionally clear form
+                            $('#title_select').val('');
+                            $('#upload_file').val('');
+                        },
+                        error: function(xhr) {
+                            $('#message').html('<p style="color:red;">Upload failed: ' + xhr.responseText + '</p>');
+                        }
+                    });
+                })
+
             });
-
-            $('#uploadBtn').click(function(e) {
-                e.preventDefault();
-
-                var source = $('#title_select').val();
-                var fileInput = $('#upload_file')[0];
-
-                var formData = new FormData();
-                formData.append('title', source);
-                formData.append('upload_file', fileInput.files[0]);
-
-                $.ajax({
-                    url: '<?= site_url("bulklead/upload_data") ?>',
-                    type: 'POST',
-                    data: formData,
-                    contentType: false,
-                    processData: false,
-                    success: function(response) {
-                        // $('#message').html('<p style="color:green;">' + response.message + '</p>');
-                        // Optionally clear form
-                        $('#title_select').val('');
-                        $('#upload_file').val('');
-                    },
-                    error: function(xhr) {
-                        $('#message').html('<p style="color:red;">Upload failed: ' + xhr.responseText + '</p>');
-                    }
-                });
-            })
-
             $('#downloadSampleBtn').click(function(e) {
                 e.preventDefault();
                 window.location.href = '<?= site_url("bulklead/download_sample") ?>';
