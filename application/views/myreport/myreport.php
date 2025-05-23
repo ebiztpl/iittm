@@ -94,12 +94,9 @@
                                         <h3 class="box-title"><strong>ABSENT/FAIL ENTRANCE EXAM CANDIDATE</strong></h3>
                                     </div> -->
                                     <table class="table table-bordered table-hover text-center" id="report_table">
-                                        <thead id="report_head" style="display: none;">
-                                            <tr>
-                                                <th colspan="3" id="assignment-title" style="text-align:center; font-size:24px; background-color:#e0e0e0; padding:4px;">
+                                        <caption id="assignment-title" style="color: black; text-align:center; caption-side: top; font-size: 20px; font-weight: bold; background-color:#e0e0e0; padding:4px;"></caption>
 
-                                                </th>
-                                            </tr>
+                                        <thead id="report_head" style="display: none;">
                                             <tr style="font-size:18px;">
                                                 <th style="width: 150px;">S.No.</th>
                                                 <th id="report-title"></th>
@@ -184,11 +181,12 @@
                             to: to
                         },
                         dataType: "json",
-                        success: function(data) {                            
+                        success: function(data) {
                             var reportData = data.data; // The response data array
                             var assignments = data.assignments; // The assignment names string
                             var html = '';
                             var totalAll = 0;
+
 
                             if (reportData.length === 0) {
                                 $('#report_head').hide();
@@ -226,6 +224,18 @@
                                 });
                             }
                             $('#report_table tbody').html(html);
+
+                            $('#report_table').DataTable({
+                                dom: 'Bfrtip',
+                                buttons: [{
+                                    extend: 'excelHtml5',
+                                    title: 'My Report IITTM'
+                                }],
+                                paging: false,
+                                searching: false,
+                                ordering: false,
+                                info: false
+                            });
                         },
                         error: function(xhr, status, error) {
                             console.log(xhr.responseText);
@@ -238,30 +248,7 @@
             });
         </script>
 
-        <!-- <script>
-            $(document).ready(function() {
-                $('#report_table').DataTable({
-                    "fixedHeader": true,
-                    "bPaginate": false,
-                    "bLengthChange": false,
-                    "bFilter": false,
-                    "bSort": true,
-                    "order": [0, "asc"],
-                    "bInfo": true,
-                    "bAutoWidth": false,
-                    // "searching": true,
-                    "bRetreive": true,
-                    "destroy": true,
 
-                    dom: 'Bfrtip',
-                    lengthMenu: [
-                        [25, 50, -1],
-                        ['25 rows', '50 rows', 'Show all']
-                    ],
-                    buttons: ['copy', 'csv', 'excel', 'pdf', 'print']
-                });
-            });
-        </script> -->
 
         <style>
             .bootstrap-select:not([class*="col-"]):not([class*="form-control"]):not(.input-group-btn) {
