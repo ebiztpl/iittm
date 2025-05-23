@@ -96,8 +96,8 @@
                                     <table class="table table-bordered table-hover text-center" id="report_table">
                                         <thead id="report_head" style="display: none;">
                                             <tr>
-                                                <th colspan="3" style="text-align:center; font-size:24px; background-color:#e0e0e0; padding:4px;">
-                                                    <strong>ABSENT/FAIL ENTRANCE EXAM CANDIDATE</strong>
+                                                <th colspan="3" id="assignment-title" style="text-align:center; font-size:24px; background-color:#e0e0e0; padding:4px;">
+
                                                 </th>
                                             </tr>
                                             <tr style="font-size:18px;">
@@ -165,7 +165,7 @@
                 $('#report_head').hide();
 
                 // Show default message before search
-                $('#report_table tbody').html(`<tr><td colspan="3" style="text-align: center; font-weight: bold; font-size: 18px; background-color: #e2e3e5; color: #383d41; padding: 10px; border: 1px solid #d6d8db;">📅 Please Select a Date Range to View the Report. </td></tr>`);
+                $('#report_table tbody').html(`<tr><td colspan="3" style="text-align: center; font-weight: bold; font-size: 18px; background-color: #e2e3e5; color: #383d41; padding: 6px; border: 1px solid #d6d8db;">📅 Please Select a Date Range to View the Report. </td></tr>`);
 
                 $('#search_btn').on('click', function() {
                     var from = $('#from').val();
@@ -184,22 +184,27 @@
                             to: to
                         },
                         dataType: "json",
-                        success: function(data) {
+                        success: function(data) {                            
+                            var reportData = data.data; // The response data array
+                            var assignments = data.assignments; // The assignment names string
                             var html = '';
                             var totalAll = 0;
-                            if (data.length === 0) {
+
+                            if (reportData.length === 0) {
                                 $('#report_head').hide();
 
-                                html = '<tr> <td colspan = "3" style = "text-align: center; font-weight: bold; font-size: 18px; background-color: #f8d7da; color: #721c24; padding: 10px; border: 1px solid #f5c6cb;" > 🚫 No Data Found for the Selected Date Range! </td> </tr>';
+                                html = '<tr> <td colspan = "3" style = "text-align: center; font-weight: bold; font-size: 18px; background-color: #f8d7da; color: #721c24; padding: 6px; border: 1px solid #f5c6cb;" > 🚫 No Data Found for the Selected Date Range! </td> </tr>';
 
                                 $('#report_table tbody').html(html);
                                 $('#report-title').html('');
+                                $('#assignment-title').html('');
 
                             } else {
                                 $('#report_head').show();
-                                $('#report-title').html('Entrance Exam Report (' + from + ' to ' + to + ')');
+                                $('#assignment-title').html('Assignment(s): ' + assignments);
+                                $('#report-title').html('Report as: (' + from + ' to ' + to + ')');
 
-                                $.each(data, function(index, value) {
+                                $.each(reportData, function(index, value) {
                                     totalAll += parseInt(value.total);
                                 });
 
@@ -212,7 +217,7 @@
 
 
                                 // Append rest of data
-                                $.each(data, function(index, value) {
+                                $.each(reportData, function(index, value) {
                                     html += '<tr style="font-size:16px;">';
                                     html += '<td>' + (index + 2) + '</td>';
                                     html += '<td><strong>' + value.response + '</strong></td>';

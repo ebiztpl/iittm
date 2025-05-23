@@ -27,88 +27,8 @@ class Myreport extends CI_Controller
     public function filter_report()
     {
         $data['result'] = [];
-        $this->load->view($this->folder . 'myreport', $data); // this will be the filter view file
+        $this->load->view($this->folder . 'myreport', $data);
     }
-
-    // public function fetch_report()
-    // {
-    //     $from_date = $this->input->post('from');
-    //     $to_date = $this->input->post('to');
-
-    //     $this->db->where('DATE(call_date) >=', $from_date);
-    //     $this->db->where('DATE(call_date) <=', $to_date);
-    //     $query = $this->db->get('calling_data'); // replace with your actual table
-
-    //     $result = [];
-    //     foreach ($query->result() as $row) {
-    //         $result[] = [
-    //             'id' => $row->id,
-    //             'title' => $row->call_action,
-    //             'team_member_name' => $row->call_date,
-    //             'category' => $row->call_action,
-    //             'date' => date('d-m-Y', strtotime($row->call_date))
-    //         ];
-    //     }
-
-    //     echo json_encode($result);
-    // }
-
-    // public function fetch_report()
-    // {
-    //     $from_date = $this->input->post('from');
-    //     $to_date = $this->input->post('to');
-
-    //     // Assuming the login session data holds user_id
-    //     $user_id = $this->session->userdata('id'); // adjust key if different
-
-    //     // Group by call_action to count each type
-    //     $this->db->select('response_id, COUNT(*) as total');
-    //     $this->db->from('calling_data');
-    //     $this->db->where('DATE(call_date) >=', $from_date);
-    //     $this->db->where('DATE(call_date) <=', $to_date);
-    //     $this->db->where('team_id', $user_id); // assuming 'created_by' holds who entered the call
-    //     $this->db->group_by('call_action');
-    //     $query = $this->db->get();
-
-    //     $result = [];
-    //     foreach ($query->result() as $index => $row) {
-    //         $result[] = [
-    //             'sr_no' => $index + 1,
-    //             'response_name' => $row->response_id,
-    //             'total' => $row->total
-    //         ];
-    //     }
-
-    //     echo json_encode($result);
-    // }
-
-
-    // public function fetch_response_report()
-    // {
-    //     $from_date = $this->input->post('from');
-    //     $to_date = $this->input->post('to');
-    //     $team_id = $this->session->userdata('admin_id'); // adjust if needed
-
-    //     $this->db->select('responses.response_name, COUNT(calling_data.id) as total');
-    //     $this->db->from('calling_data');
-    //     $this->db->join('responses', 'id = calling_data.response_id', 'left');
-    //     $this->db->where('DATE(calling_data.call_date) >=', $from_date);
-    //     $this->db->where('DATE(calling_data.call_date) <=', $to_date);
-    //     $this->db->where('calling_data.team_id', $team_id);
-    //     $this->db->group_by('calling_data.response_id');
-    //     $query = $this->db->get();
-
-    //     $result = [];
-    //     foreach ($query->result() as $index => $row) {
-    //         $result[] = [
-    //             'sr_no' => $index + 1,
-    //             'response_name' => $row->response_name,
-    //             'total' => $row->total
-    //         ];
-    //     }
-
-    //     echo json_encode($result);
-    // }
 
     public function fetch_report()
     {
@@ -116,6 +36,24 @@ class Myreport extends CI_Controller
         $to_date = $this->input->post('to');
 
         $team_id = $this->session->userdata('admin_id');
+
+        // 1. Fetch assignment names
+        $this->db->distinct();
+        $this->db->select('a.assignment_id, am.assignment_name');
+        $this->db->from('calling_data cd');
+        $this->db->join('assignment a', 'a.assign_id = cd.assign_id', 'left');
+        $this->db->join('assignment_master am', 'am.id = a.assignment_id', 'left');
+        $this->db->where('cd.team_id', $team_id);
+        $this->db->where('DATE(cd.call_date) >=', $from_date);
+        $this->db->where('DATE(cd.call_date) <=', $to_date);
+        $query_assignments = $this->db->get();
+
+        $assignment_names = [];
+        foreach ($query_assignments->result() as $row) {
+            if (!in_array($row->assignment_name, $assignment_names)) {
+                $assignment_names[] = $row->assignment_name;
+            }
+        }
 
         $this->db->select('response_id, COUNT(*) as total');
         $this->db->from('calling_data');
@@ -138,6 +76,9 @@ class Myreport extends CI_Controller
             ];
         }
 
-        echo json_encode($result);
+        echo json_encode([
+            'data' => $result,
+            'assignments' => implode(' / ', $assignment_names)
+        ]);
     }
 }
