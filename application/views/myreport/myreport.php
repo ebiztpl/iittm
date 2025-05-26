@@ -27,6 +27,11 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
 
+    <script>
+        // var reportDetailsURL = "<?= site_url('Myreport/report_details?assignment_id=') ?>" + assignment_id;
+        var reportDetailsURL = "<?= site_url('Myreport/report_details') ?>";
+    </script>
+
 </head>
 
 <body class="skin-blue sidebar-mini sidebar-collapse" ng-app="myApp" ng-controller="home_screen">
@@ -36,7 +41,7 @@
         <!-- Left side column. contains the logo and sidebar -->
 
         <?php $this->load->view('../layout/sidemenu.php');
-        sidebar(1208);
+        sidebar(1211);
         ?>
         <div id="loading"><img src="<?php echo base_url(); ?>/themes/img/loader.gif" /></div>
 
@@ -68,6 +73,18 @@
                     <div class="box">
                         <div class="box-body">
                             <div class="row" id="filter-section">
+                                <?php if ($this->session->userdata('role') == 'admin'): ?>
+                                    <div class="col-sm-2">
+                                        <select id="team_member" class="form-control">
+                                            <option value="">Select Team Member</option>
+                                            <?php foreach ($user as $u): ?>
+                                                <option value="<?= $u->admin_id ?>"><?= $u->admin_name ?></option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    </div>
+                                <?php endif; ?>
+
+
                                 <div class="col-sm-2">
                                     <input type="text" id="from" class="form-control datepicker" placeholder="From Date">
                                 </div>
@@ -94,9 +111,9 @@
                                         <h3 class="box-title"><strong>ABSENT/FAIL ENTRANCE EXAM CANDIDATE</strong></h3>
                                     </div> -->
                                     <table class="table table-bordered table-hover text-center" id="report_table">
-                                        <caption id="assignment-title" style="color: black; text-align:center; caption-side: top; font-size: 20px; font-weight: bold; background-color:#e0e0e0; padding:4px;"></caption>
+                                        <!-- <caption id="assignment-title" style="color: black; text-align:center; caption-side: top; font-size: 20px; font-weight: bold; background-color:#e0e0e0; padding:4px;"></caption> -->
 
-                                        <thead id="report_head" style="display: none;">
+                                        <thead id="report_head" style="display: none; background-color: #e0e0e0">
                                             <tr style="font-size:18px;">
                                                 <th style="width: 150px;">S.No.</th>
                                                 <th id="report-title"></th>
@@ -167,6 +184,7 @@
                 $('#search_btn').on('click', function() {
                     var from = $('#from').val();
                     var to = $('#to').val();
+                    var team_member = $('#team_member').val();
 
                     if (from === "" || to === "") {
                         alert("Please select both from and to dates.");
@@ -178,51 +196,89 @@
                         type: "POST",
                         data: {
                             from: from,
-                            to: to
+                            to: to,
+                            team_member: team_member
                         },
                         dataType: "json",
                         success: function(data) {
-                            var reportData = data.data; // The response data array
-                            var assignments = data.assignments; // The assignment names string
+                            var assignmentReports = data.data; // The response data array
+                            // var assignments = data.assignments; // The assignment names string
                             var html = '';
                             var totalAll = 0;
 
 
-                            if (reportData.length === 0) {
+                            //  Populate team member dropdown dynamically
+                            var teamMembers = data.team_members;
+                            var teamMemberSelect = $('#team_member');
+                            teamMemberSelect.empty();
+                            teamMemberSelect.append('<option value="">Select Team Member</option>');
+                            $.each(teamMembers, function(index, member) {
+                                teamMemberSelect.append('<option value="' + member.admin_id + '">' + member.admin_name + '</option>');
+                            });
+
+
+                            if (assignmentReports.length === 0) {
                                 $('#report_head').hide();
 
                                 html = '<tr> <td colspan = "3" style = "text-align: center; font-weight: bold; font-size: 18px; background-color: #f8d7da; color: #721c24; padding: 6px; border: 1px solid #f5c6cb;" > 🚫 No Data Found for the Selected Date Range! </td> </tr>';
 
                                 $('#report_table tbody').html(html);
                                 $('#report-title').html('');
-                                $('#assignment-title').html('');
+                                // $('#assignment-title').html('');
 
                             } else {
                                 $('#report_head').show();
-                                $('#assignment-title').html('Assignment(s): ' + assignments);
+                                // $('#assignment-title').html('Assignment(s) Report');
                                 $('#report-title').html('Report as: (' + from + ' to ' + to + ')');
 
-                                $.each(reportData, function(index, value) {
-                                    totalAll += parseInt(value.total);
+                                assignmentReports.forEach((assignmentReport, aIndex) => {
+                                    let assignmentTotal = 0;
+                                    var rowCount = 1;
+
+
+                                    // Calculate total first (required to show total before responses)
+                                    assignmentReport.responses.forEach((r) => {
+                                        assignmentTotal += parseInt(r.total);
+                                        totalAll += parseInt(r.total);
+                                    });
+
+
+                                    let assignmentLink = "<?php echo site_url('Myreport/report_details'); ?>" +
+                                        "?assignment_id=" + assignmentReport.assignment_id +
+                                        "&response_id=" +
+                                        "&from_date=" + from +
+                                        "&to_date=" + to;
+
+                                    // Show assignment total FIRST (above the responses)
+                                    html += '<tr style="background-color: #F1F1F1; font-weight: bold; font-size:20px;">' +
+                                        '<td></td>' +
+                                        '<td style="text-align: left">Total For ' + assignmentReport.assignment + '</td>' +
+                                        '<td><a href="' + assignmentLink + '" >' + assignmentTotal + '</a></td>' +
+                                        '</tr>';
+
+
+                                    assignmentReport.responses.forEach((r, rIndex) => {
+                                        let responseLink = "<?php echo site_url('Myreport/report_details'); ?>" +
+                                            "?assignment_id=" + assignmentReport.assignment_id +
+                                            "&response_id=" + r.response_id +
+                                            "&from_date=" + from +
+                                            "&to_date=" + to;
+
+                                        html += '<tr style="font-size:16px;">';
+                                        html += '<td>' + (rowCount++) + '</td>';
+                                        html += '<td><strong>' + r.response + '</strong></td>';
+                                        html += '<td><a href="' + responseLink + '" >' + r.total + '</a></td>';
+                                        html += '</tr>';
+                                    });
                                 });
 
-                                // Insert Total row at top
-                                html += '<tr style="font-size:16px; font-weight:bold;">';
-                                html += '<td>1</td>';
-                                html += '<td><strong>Total Calls</strong></td>';
-                                html += '<td>' + totalAll + '</td>';
-                                html += '</tr>';
-
-
-                                // Append rest of data
-                                $.each(reportData, function(index, value) {
-                                    html += '<tr style="font-size:16px;">';
-                                    html += '<td>' + (index + 2) + '</td>';
-                                    html += '<td><strong>' + value.response + '</strong></td>';
-                                    html += '<td>' + value.total + '</td>';
-                                    html += '</tr>';
-                                });
+                                html = '<tr style="font-size:18px; font-weight:bold;"><td>#</td><td><strong>Total Calls</strong></td><td>' + totalAll + '</td></tr>' + html;
                             }
+
+                            if ($.fn.DataTable.isDataTable('#report_table')) {
+                                $('#report_table').DataTable().destroy();
+                            }
+
                             $('#report_table tbody').html(html);
 
                             $('#report_table').DataTable({
@@ -241,6 +297,7 @@
                             console.log(xhr.responseText);
                             alert("Something went wrong");
                         }
+
                     });
                 });
 
