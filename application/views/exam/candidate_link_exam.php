@@ -290,7 +290,7 @@
 
 		$("#exam_data_save").submit(function() {
 			$.ajax({
-				url: "<?php echo site_url('exam/c'); ?>",
+				url: "<?php echo site_url('exam/exam_data_save'); ?>",
 				data: $("#exam_data_save").serialize(),
 				type: "POST",
 				dataType: 'json',
