@@ -1007,6 +1007,7 @@ class Communication extends CI_Controller {
 			'mode' => $mode,
 			'responses' => $responses,
 			'user' => $user,
+			'tags' => $tags
 		));
 	}
 
