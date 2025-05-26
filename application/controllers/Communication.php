@@ -962,23 +962,77 @@ class Communication extends CI_Controller {
 		));
 	}
 
+	public function assignment_details($id)
+	{
+		$role = $this->session->userdata['role'];
 
+		if ($role == 'admin') {
+			$assignment = $this->db->select('am.*, am.id as id, c.name as cname, c.id as cid, a.admin_name as team')
+				->from('assignment_master am')
+				->join('assignment aa', 'aa.assignment_id = am.id')
+				->join('campaign c', 'c.id = aa.campaign_id')
+				->join('admin a', 'a.admin_id = aa.team_id')
+				->where('am.id', $id)
+				->group_by('aa.assignment_id')
+				->order_by('aa.created_at', 'DESC')
+				->get()->result();
+		} else {
+			$assignment = $this->db->select('am.*, am.id as id, c.name as cname, c.id as cid, a.admin_name as team')
+				->from('assignment_master am')
+				->join('assignment aa', 'aa.assignment_id = am.id')
+				->join('campaign c', 'c.id = aa.campaign_id')
+				->join('admin a', 'a.admin_id = aa.team_id')
+				->where('am.id', $id)
+				->where('aa.team_id', $this->session->userdata['admin_id'])
+				->group_by('aa.assignment_id')
+				->order_by('aa.created_at', 'DESC')
+				->get()->result();
+		}
+
+		// Your requested line - fetch assignment_master data as array (for details)
+		$details = $this->db->where('id', $id)->get('assignment_master')->result_array();
+
+		$team = $this->db->select('*')->from('team')->get()->result();
+		$campaign = $this->db->select('*')->from('campaign')->get()->result();
+		$mode = $this->db->select('*')->from('mode')->get()->result();
+		$responses = $this->db->select('*')->from('responses')->get()->result();
+		$tags = $this->db->select('*')->from('tags')->get()->result();
+		$user = $this->db->select('*')->from('admin')->where('role', 'telecaller')->get()->result();
+
+		$this->load->view($this->folder . "assignment_details", array(
+			'assignment' => $assignment,
+			'details' => $details,   // pass details to view
+			'team' => $team,
+			'campaign' => $campaign,
+			'mode' => $mode,
+			'responses' => $responses,
+			'user' => $user,
+		));
+	}
 
 	public function assignment_candidates()
 	{
-	
-	
-	
-		$draw = intval($this->input->get("draw"));
-      	$start = intval(1);
-      	$length = intval(5);
 
+		$draw = intval($this->input->get("draw"));
+		$start = $this->input->get("start");
+		$length = $this->input->get("length");
 		$assignment_id = $this->input->post('data');
 
-		
-		$query = $this->db->query("SELECT um.*,aa.created_at,aa.assign_id,aa.campaign_id FROM assignment aa INNER JOIN assignment_master am ON am.id = aa.assignment_id INNER JOIN user_master um ON um.user_id=aa.user_id WHERE am.id = $assignment_id");
-		
+		if (!$assignment_id) {
+			echo json_encode([
+				'data' => [],
+				'recordsTotal' => 0,
+				'recordsFiltered' => 0,
+				'campaign_id' => '',
+				'recordsComplete' => 0
+			]);
+			return;
+		}
 
+
+		$query = $this->db->query("SELECT um.*,aa.created_at,aa.assign_id,aa.campaign_id FROM assignment aa INNER JOIN assignment_master am ON am.id = aa.assignment_id INNER JOIN user_master um ON um.user_id=aa.user_id WHERE am.id = ?", [$assignment_id]);
+
+		$this->db->limit($length, $start);
 			
 		
       $data = [];
@@ -1032,7 +1086,7 @@ class Communication extends CI_Controller {
 			$parma_state = $parma_state_data->name;
 			$parma_city = $parma_city_data->name;
 			$corre_state = $corre_state_data->name;
-			$corre_city = $corre_city_data->name??'';
+			$corre_city = isset($corre_city_data->name) ? $corre_city_data->name : '';
 				
 			$college = $candidate_data->academic_intermediate;
 			$academic_year = $candidate_data->academic_year;
@@ -1074,7 +1128,7 @@ class Communication extends CI_Controller {
 			$admit_btn = "<a href='generate_admit_card/$r->user_id' target='_blank' class='btn btn-danger btn-xs'>Admit Card</a>";
 
 			$checked="";
-			if($exam_status->id??0 !=''){$checked = 'checked = checked; disabled';}
+			if($exam_status->id??0 !=''){$checked = 'checked = "checked"; disabled';}
 			
 		  	if($score_date){
 				$scoreA = "Name:". $score_date->score_name??'';
@@ -1153,13 +1207,13 @@ class Communication extends CI_Controller {
 	                 "recordsTotal" => $query->num_rows(),
 	                 "recordsFiltered" => $query->num_rows(),
 			   		 "recordsComplete" => $comp,
-			  		"campaign_id" => $campaign_id,
+			  		// "campaign_id" => $campaign_id,
 	                 "data" => $data
 	      );
 
 
       echo json_encode($result);
-      exit();
+    //   exit();
 
 	}
 
