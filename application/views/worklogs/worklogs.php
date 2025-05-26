@@ -200,6 +200,7 @@
                                                             <td><?php echo $list->date; ?></td>
                                                             <!-- <td><?php echo $list->description; ?></td> -->
                                                             <td>
+                                                                <a class="view" data-id='<?php echo $list->id; ?>'><i class="fa fa-info-circle"></i></a>
 
                                                                 <a class="btn btn-primary btn-xs edit" data-id='<?php echo $list->id; ?>'><i class="fa fa-pencil"></i> Edit</a>
                                                                 <a class="btn btn-danger btn-xs delete" data-id='<?php echo $list->id; ?>'><i class="fa fa-trash"></i> Delete</a>
@@ -301,6 +302,53 @@
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- modal for the view worklogs  -->
+        <div class="modal fade" id="viewModal" tabindex="-1" role="dialog" aria-labelledby="viewModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header bg-primary text-white">
+                        <h3 class="modal-title" id="viewModalLabel">Worklog Details</h3>
+                        <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-sm-12" style="margin-bottom: 24px;">
+                                <table class="table table-bordered table-striped text-center">
+                                    <thead>
+                                        <tr>
+                                            <th>Title</th>
+                                            <th>Date</th>
+                                            <th>Team Members</th>
+                                            <th>Category</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="worklogTableBody">
+
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <div class="col-sm-12">
+                                <table class="table table-bordered table-striped text-center">
+                                    <thead>
+                                        <tr>
+                                            <th>Description:</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="worklogDescriptionTableBody">
+
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -462,6 +510,46 @@
                     error: function(data) {
                         alert("Error occurred while submitting the form");
                     }
+                });
+            });
+
+            // for open view modal
+            $(document).ready(function() {
+                $('.view').on('click', function() {
+                    var id = $(this).data('id');
+
+                    $.ajax({
+                        url: '<?= site_url("worklogs/get_worklogs") ?>',
+                        type: 'POST',
+                        data: {
+                            id: id
+                        },
+                        dataType: 'json',
+                        success: function(response) {
+                            if (response.length > 0) {
+                                var worklog = response[0];
+                                var rowHtml = `
+                                    <tr>
+                                    <td>${worklog.title}</td>
+                                    <td>${worklog.date}</td>
+                                    <td>${worklog.team_member_name}</td>
+                                    <td>${worklog.category}</td>
+                                    </tr>`;
+
+                                var descRow = `
+                                    <tr>
+                                        <td>${worklog.description}</td>
+                                    </tr>`;
+
+                                $('#worklogTableBody').html(rowHtml);
+                                $('#worklogDescriptionTableBody').html(descRow);
+                                $('#viewModal').modal('show');
+                            }
+                        },
+                        error: function() {
+                            alert("Failed to fetch worklog data.");
+                        }
+                    });
                 });
             });
         </script>
