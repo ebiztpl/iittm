@@ -150,7 +150,7 @@ class Myreport extends CI_Controller
     }
 
     // AJAX method to fetch data for DataTable
-    public function report_details2()
+    public function report_details_display()
     {
         $draw = intval($this->input->post("draw"));
         $assignment_id = $this->input->post('assignment_id');
@@ -178,7 +178,7 @@ class Myreport extends CI_Controller
             SELECT DISTINCT um.*, aa.created_at, aa.assign_id, aa.campaign_id, am.id as course_id
             FROM assignment aa
             INNER JOIN assignment_master am ON am.id = aa.assignment_id
-            INNER JOIN calling_data cd ON am.id = aa.assignment_id
+            INNER JOIN calling_data cd ON cd.user_id = aa.user_id AND cd.assign_id = aa.assign_id
             INNER JOIN user_master um ON um.user_id = aa.user_id
             $where
         ", $params);

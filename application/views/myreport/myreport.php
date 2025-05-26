@@ -113,7 +113,7 @@
                                     <table class="table table-bordered table-hover text-center" id="report_table">
                                         <!-- <caption id="assignment-title" style="color: black; text-align:center; caption-side: top; font-size: 20px; font-weight: bold; background-color:#e0e0e0; padding:4px;"></caption> -->
 
-                                        <thead id="report_head" style="display: none;">
+                                        <thead id="report_head" style="display: none; background-color: #e0e0e0">
                                             <tr style="font-size:18px;">
                                                 <th style="width: 150px;">S.No.</th>
                                                 <th id="report-title"></th>
@@ -205,7 +205,7 @@
                             // var assignments = data.assignments; // The assignment names string
                             var html = '';
                             var totalAll = 0;
-                            var rowCount = 1;
+
 
                             //  Populate team member dropdown dynamically
                             var teamMembers = data.team_members;
@@ -233,11 +233,31 @@
 
                                 assignmentReports.forEach((assignmentReport, aIndex) => {
                                     let assignmentTotal = 0;
+                                    var rowCount = 1;
 
-                                    html += '<tr style="background-color: #e0e0e0; font-size:16px;"><td colspan="3"><strong>' + assignmentReport.assignment + '</strong></td></tr>';
+
+                                    // Calculate total first (required to show total before responses)
+                                    assignmentReport.responses.forEach((r) => {
+                                        assignmentTotal += parseInt(r.total);
+                                        totalAll += parseInt(r.total);
+                                    });
+
+
+                                    let assignmentLink = "<?php echo site_url('Myreport/report_details'); ?>" +
+                                        "?assignment_id=" + assignmentReport.assignment_id +
+                                        "&response_id=" +
+                                        "&from_date=" + from +
+                                        "&to_date=" + to;
+
+                                    // Show assignment total FIRST (above the responses)
+                                    html += '<tr style="background-color: #F1F1F1; font-weight: bold; font-size:20px;">' +
+                                        '<td></td>' +
+                                        '<td style="text-align: left">Total For ' + assignmentReport.assignment + '</td>' +
+                                        '<td><a href="' + assignmentLink + '" >' + assignmentTotal + '</a></td>' +
+                                        '</tr>';
+
 
                                     assignmentReport.responses.forEach((r, rIndex) => {
-
                                         let responseLink = "<?php echo site_url('Myreport/report_details'); ?>" +
                                             "?assignment_id=" + assignmentReport.assignment_id +
                                             "&response_id=" + r.response_id +
@@ -247,28 +267,10 @@
                                         html += '<tr style="font-size:16px;">';
                                         html += '<td>' + (rowCount++) + '</td>';
                                         html += '<td><strong>' + r.response + '</strong></td>';
-                                        html += '<td><a href="' + responseLink + '" target="_blank">' + r.total + '</a></td>';
+                                        html += '<td><a href="' + responseLink + '" >' + r.total + '</a></td>';
                                         html += '</tr>';
-
-                                        assignmentTotal += parseInt(r.total);
-                                        totalAll += parseInt(r.total);
                                     });
-
-                                    let assignmentLink = "<?php echo site_url('Myreport/report_details'); ?>" +
-                                        "?assignment_id=" + assignmentReport.assignment_id +
-                                        "&from_date=" + from +
-                                        "&to_date=" + to;
-
-                                    html += '<tr style="font-weight:bold; font-size:16px;">' +
-                                        '<td></td>' +
-                                        '<td>Total For ' + assignmentReport.assignment + '</td>' +
-                                        '<td><a href="' + assignmentLink + '" target="_blank">' + assignmentTotal + '</a></td>' +
-                                        '</tr>';
                                 });
-
-                                // let overallLink = "<?php echo site_url('Myreport/report_details'); ?>" +
-                                //     "?from_date=" + from +
-                                //     "&to_date=" + to;
 
                                 html = '<tr style="font-size:18px; font-weight:bold;"><td>#</td><td><strong>Total Calls</strong></td><td>' + totalAll + '</td></tr>' + html;
                             }

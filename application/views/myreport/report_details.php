@@ -58,7 +58,7 @@
                             <!-- <span style="font-size: 20px; color: green; text-align: right; margin-left: 50px; float: right">Total Records - <span id="record">0</span></span> -->
 
                             <!-- <span style="font-size: 20px; color: green; text-align: right; display: block; ">Complete - <span id="complete">0</span></span> -->
-                             
+
                             <div style="overflow:scroll; height:500px;">
                                 <table id="item-list-filter" class="table table-bordered table-striped table-hover ">
                                     <thead>
@@ -101,39 +101,62 @@
 
 
 
-        <<script>
+        <script>
             $(document).ready(function() {
-            $("#loading").show();
+                $("#loading").show();
 
-            var assignmentId = <?= json_encode($assignment_id) ?>;
-            var responseId = <?= json_encode($response_id) ?>;
-            var fromDate = <?= json_encode($from_date) ?>;
-            var toDate = <?= json_encode($to_date) ?>;
+                var assignmentId = <?= json_encode($assignment_id) ?>;
+                var responseId = <?= json_encode($response_id) ?>;
+                var fromDate = <?= json_encode($from_date) ?>;
+                var toDate = <?= json_encode($to_date) ?>;
 
-            $('#item-list-filter').DataTable({
-            ajax: {
-            url: "<?= site_url('Myreport/report_details2'); ?>",
-            type: 'POST',
-            data: function(d) {
-            d.assignment_id = assignmentId;
-            d.response_id = responseId;
-            d.from_date = fromDate;
-            d.to_date = toDate;
-            },
-            complete: function() {
-            $("#loading").hide();
-            }
-            },
-            columns: [
-            { data: 0 },
-            { data: 1 },
-            { data: 2 },
-            { data: 3 }
-            ],
-            order: [[0, "asc"]],
-            paging: false,
-            searching: false
-            });
+                $('#item-list-filter').DataTable({
+                    ajax: {
+                        url: "<?= site_url('Myreport/report_details_display'); ?>",
+                        type: 'POST',
+                        data: function(d) {
+                            d.assignment_id = assignmentId;
+                            d.response_id = responseId;
+                            d.from_date = fromDate;
+                            d.to_date = toDate;
+                        },
+                        complete: function() {
+                            $("#loading").hide();
+                        }
+                    },
+                    columns: [{
+                            data: 0
+                        },
+                        {
+                            data: 1
+                        },
+                        {
+                            data: 2
+                        },
+                        {
+                            data: 3
+                        }
+                    ],
+                    order: [
+                        [0, "asc"]
+                    ],
+                    fixedHeader: true,
+                    bPaginate: false,
+                    bLengthChange: false,
+                    bFilter: false,
+                    bSort: true,
+                    bInfo: true,
+                    bAutoWidth: false,
+                    searching: true,
+                    retrieve: true,
+                    destroy: true,
+                    dom: 'Bfrtip',
+                    lengthMenu: [
+                        [25, 50, -1],
+                        ['25 rows', '50 rows', 'Show all']
+                    ],
+                    buttons: ['copy', 'csv', 'excel', 'pdf', 'print']
+                });
             });
         </script>
 </body>
