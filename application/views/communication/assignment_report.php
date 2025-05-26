@@ -55,7 +55,7 @@
                 <div class="page-content">
 
                     <div class="box">
-                        <div class="box-body">
+                        <div class="box-body" style="max-height: 700px; overflow-y: auto;">
                             <table class="table table-bordered">
                                 <thead>
                                     <tr>
