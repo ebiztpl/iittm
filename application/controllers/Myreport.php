@@ -285,7 +285,7 @@ class Myreport extends CI_Controller
             }
 
             $checkbox_html = '';
-            $calling_check = $this->db->where('assign_id', $r->assign_id)->get('calling_data')->row();
+            $calling_check = $this->db->select("*")->from("calling_data")->where("assign_id = " . $r->assign_id . "")->get()->row();
 
             if ($this->session->userdata('role') == 'telecaller') {
                 if ($calling_check) {

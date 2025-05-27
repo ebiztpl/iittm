@@ -109,10 +109,7 @@ if ($this->session->userdata['role'] == "telecaller" || $this->session->userdata
 
               <li class="<?php if ($index == 1209) echo 'active' ?>"><a href="<?php echo base_url(); ?>index.php/communication/responses"><i class="fa fa-angle-double-right"></i>Responses</a></li>
 
-
               <li class="<?php if ($index == 1207) echo 'active' ?>"><a href="<?php echo base_url(); ?>index.php/communication/assignment_report"><i class="fa fa-angle-double-right"></i>Assignment</a></li>
-
-
 
               <!-- <li class="<?php if ($index == 1207) echo 'active' ?>"><a href="<?php echo base_url(); ?>index.php/communication/admit_card"><i class="fa fa-angle-double-right"></i>Communication Center</a></li> -->
 
@@ -359,6 +356,8 @@ if ($this->session->userdata['role'] == "telecaller" || $this->session->userdata
               <li class="<?php if ($index == 1207) echo 'active' ?>"><a href="<?php echo base_url(); ?>index.php/communication/assignment_report"><i class="fa fa-angle-double-right"></i>Assignment Report</a></li>
 
               <li class="<?php if ($index == 1207) echo 'active' ?>"><a href="<?php echo base_url(); ?>index.php/communication/team_report"><i class="fa fa-angle-double-right"></i>Team Report</a></li>
+
+              <li class="<?php if ($index == 1207) echo 'active' ?>"><a href="<?php echo base_url(); ?>index.php/communication/general_report"><i class="fa fa-angle-double-right"></i>General Report</a></li>
 
 
               <!-- <li class="<?php if ($index == 1207) echo 'active' ?>"><a href="<?php echo base_url(); ?>index.php/communication/admit_card"><i class="fa fa-angle-double-right"></i>Communication Center</a></li> -->

@@ -806,50 +806,52 @@ class Communication extends CI_Controller
 		exit();
 	}
 
+
 	public function calling_data_update()
 	{
 
+		
+		$flag = 0; $check=array(); $msg="";
+		
+			$data = array(
+				'call_date' => date('Y-m-d',strtotime($_POST['edit_call_date'])),
+				'call_time' => $_POST['edit_call_time'],
+				'mode' => $_POST['edit_mode_id'],
+				'call_action' => $_POST['edit_call_action'],
+				'response_id' => $_POST['edit_response_id'],
+				'correct_email' => $_POST['edit_correct_email'],
+				'correct_mobile' => $_POST['edit_correct_mobile'],
+				'notes' => $_POST['edit_notes'],
+				'tag'=> implode(',', $_POST['edit_tags'])
+			);
 
-		$flag = 0;
-		$check = array();
-		$msg = "";
+		
+			if(isset($_POST['edit_status'])?$_POST['edit_status']:"" == 1){
+				
+				$update = array('status' => 1);
+				$where = "user_id = ".$_POST['edit_user_id']." AND assign_id = ".$_POST['edit_assign_id'];
+				$update = $this->db_lib->update('assignment', $update, $where);
+			} 
 
-		$data = array(
-			'call_date' => date('Y-m-d', strtotime($_POST['edit_call_date'])),
-			'call_time' => $_POST['edit_call_time'],
-			'mode' => $_POST['edit_mode_id'],
-			'call_action' => $_POST['edit_call_action'],
-			'response_id' => $_POST['edit_response_id'],
-			'correct_email' => $_POST['edit_correct_email'],
-			'correct_mobile' => $_POST['edit_correct_mobile'],
-			'notes' => $_POST['edit_notes'],
-			'tag' => implode(',', $_POST['edit_tags'])
-		);
+			$where_call = "id = ".$_POST['edit_calling_id'];
+			$calling_update = $this->db_lib->update('calling_data', $data, $where_call);
+			if($calling_update){
+				$flag = 1; 
+				$msg = "<span style='color:green;'>Response Has been Updated Successfully". "</span>";
+			}
 
-
-		if (isset($_POST['edit_status']) ? $_POST['edit_status'] : "" == 1) {
-
-			$update = array('status' => 1);
-			$where = "user_id = " . $_POST['edit_user_id'] . " AND assign_id = " . $_POST['edit_assign_id'];
-			$update = $this->db_lib->update('assignment', $update, $where);
-		}
-
-		$where_call = "id = " . $_POST['edit_calling_id'];
-		$calling_update = $this->db_lib->update('calling_data', $data, $where_call);
-		if ($calling_update) {
-			$flag = 1;
-			$msg = "<span style='color:green;'>Response Has been Updated Successfully" . "</span>";
-		}
-
-
-		if ($flag == 1) {
-			$array = array('status' => 1, 'msg' => $msg);
+		
+		if($flag==1){
+			$array = array('status' => 1, 'msg' => $msg );
 			echo json_encode($array);
-		} else {
-			$array = array('status' => 0, 'msg' => $msg);
+		}else{
+			$array = array('status' => 0, 'msg' => $msg );
 			echo json_encode($array);
 		}
+
+		
 	}
+
 
 	public function calling_data_save()
 	{
@@ -1022,6 +1024,7 @@ class Communication extends CI_Controller
 			'responses' => $responses,
 			'tags' => $tags,
 			'user' => $user,
+			'tags' => $tags
 		));
 	}
 
@@ -3031,4 +3034,179 @@ class Communication extends CI_Controller
 		echo json_encode($result);
 		exit();
 	}
-}
+
+	
+
+	public function general_report(){
+		$responses = $this->db->select('*')->from('responses')->get()->result();
+		$tags = $this->db->select('*')->from('tags')->get()->result();
+		$this->load->view($this->folder . "general_report", array('tags'=>$tags, 'responses' => $responses));
+	}
+
+
+	public function general_report_search()
+	{
+
+	
+	  $draw = intval($this->input->get("draw"));
+      $start = intval(1);
+      $length = intval(5);
+
+	  $whr = $this->input->post('data');
+		
+	  //$query = $this->db->query("SELECT um.*,ca.post_date FROM candidate_data ca 
+	  // INNER JOIN user_master um ON um.user_id=ca.mobile_verified_id 
+	  // INNER JOIN calling_data cd ON cd.user_id = um.user_id $whr AND ca.duplicate = 0 AND ca.admission=0 AND um.login_status = 2");
+
+	  $query = $this->db->query("SELECT um.*,ca.post_date FROM candidate_data ca 
+		INNER JOIN user_master um ON um.user_id=ca.mobile_verified_id 
+		INNER JOIN calling_data cd ON cd.user_id = um.user_id
+		INNER JOIN candidate_exam ce ON ce.user_id = um.user_id
+		INNER JOIN candidate_result cr ON cr.link_id = ce.id
+		INNER JOIN exam_master em ON em.id = ce.exam_id
+		$whr AND ca.duplicate = 0 AND ca.admission=0 AND um.login_status = 2 AND ce.exam_status='pass' AND em.exam_type='gdpi'");
+			
+
+      $data = [];
+      $n = 0;
+      foreach($query->result() as $r) {
+
+
+
+
+      		    $candidate_data = $this->db->select("*")->from("candidate_data")->where("mobile_verified_id = ".$r->user_id." AND duplicate = 0")->get()->row(); 
+		  
+		  		$score_date = $this->db->select("*")->from("candidate_score_mba")->where("candidate_id = ".$r->user_id)->get()->row(); 
+
+      			$fullname =""; $corre_state=""; $corre_city="";
+      			$email ="";  $parma_city=""; $parma_state="";
+      			$gender=""; $category=""; $dob="";
+      			$university=""; $appr_center_1=""; $gdpi_center_1=""; $study_center1="";
+
+      		if($candidate_data !=""){
+
+      			$parma_state_data = $this->db->select("*")->from("states")->where("id = ".$candidate_data->parma_state."")->get()->row();
+      			$parma_city_data = $this->db->select("*")->from("cities")->where("id = ".$candidate_data->parma_city."")->get()->row(); 
+	      		
+
+	      		$corre_state_data = $this->db->select("*")->from("states")->where("id = ".$candidate_data->corre_state."")->get()->row();
+	      		$corre_city_data = $this->db->select("*")->from("cities")->where("id = ".$candidate_data->corre_city."")->get()->row(); 
+	      		
+				if($r->course_id==1){$course = "BBA";}
+				if($r->course_id==2){$course = "MBA";}
+
+      			if($r->course_id==1){$fullname = "<a href='../journey/show_journey/$r->user_id' target='_blank'>".$candidate_data->first_name." ".$candidate_data->middle_name." ".$candidate_data->last_name."</a>";}
+			
+				if($r->course_id==2){$fullname = "<a href='../journey/show_journey/$r->user_id' target='_blank'>".$candidate_data->first_name." ".$candidate_data->middle_name." ".$candidate_data->last_name."</a>";}
+
+				$email = $candidate_data->email_id;
+				$gender = $candidate_data->gender;
+				$university = $candidate_data->academic_board;
+				$appr_center_1 = $candidate_data->appearing_center_1;
+				$appr_center_2 = $candidate_data->appearing_center_2;
+				$appr_center_3 = $candidate_data->appearing_center_3;
+				$appr_center_4 = $candidate_data->appearing_center_4;
+				$gdpi_center_1 = $candidate_data->gdpi_center_1;
+				$gdpi_center_2 = $candidate_data->gdpi_center_2;
+				$gdpi_center_3 = $candidate_data->gdpi_center_3;
+				$gdpi_center_4 = $candidate_data->gdpi_center_4;
+				$study_center1 = $candidate_data->study_centre_1;
+				$study_center2 = $candidate_data->study_centre_2;
+				$study_center3 = $candidate_data->study_centre_3;
+				$study_center4 = $candidate_data->study_centre_4;
+				$category = $candidate_data->category;
+				$dob = $candidate_data->dob;
+				
+				$parma_state = $parma_state_data->name;
+				$parma_city = $parma_city_data->name;
+				$corre_state = $corre_state_data->name;
+				$corre_city = $corre_city_data->name??'';
+				
+				$college = $candidate_data->academic_intermediate;
+				$academic_year = $candidate_data->academic_year;
+				$academic_mark_obt =$candidate_data->academic_mark_obt;
+				$academic_mark_max =$candidate_data->academic_mark_max;
+				$academic_percentage =$candidate_data->academic_percentage;
+				$obt = $academic_mark_obt.'/'.$academic_mark_max;
+				$parma_address = $candidate_data->parma_appertment." ".$candidate_data->parma_colony." ".$candidate_data->parma_area;
+				$corre_address = $candidate_data->corre_appertment." ".$candidate_data->corre_colony." ".$candidate_data->corre_area;
+
+
+			$exam_status = $this->db->select("*")->from("candidate_exam")->where("user_id = ".$r->user_id."")->get()->row();
+
+			$this->db->select('*');    
+			$this->db->from('candidate_exam CE');
+			$this->db->join('exam_master em', 'em.id = CE.exam_id');
+			$this->db->where('CE.user_id', $r->user_id);
+			$exam = $this->db->get()->result();
+			$examName = "<ul>";
+			foreach ($exam as $key => $exams) {
+				$examName .=  '<li>'.$exams->exam_name.'</li>';
+			}
+			$examName .='</ul>';
+
+
+      		}
+      		
+
+      		$n++;
+      		$amount = ($r->amount)/100;
+      		$tranid = $r->razorpay_trans_id;
+
+			if($r->login_status==1){$sts_btn = "<span class='btn btn-xs btn-danger'> Mobile Verified</span>";} 
+
+			if($r->login_status==2){$sts_btn = "<span class='btn btn-xs btn-success'> Paid</span>";}
+			
+			$admit_btn = "<a href='generate_admit_card/$r->user_id' target='_blank' class='btn btn-danger btn-xs'>Admit Card</a>";
+
+			$checked="";
+			if($exam_status->id??0 !=''){$checked = 'checked = checked; disabled';}
+			
+		  	if($score_date){
+				$scoreA = "Name:". $score_date->score_name??'';
+				$scoreB = "<br/>Score: ". $score_date->score_marks??'';
+				$scoreC = "<br/>Year: ".  $score_date->score_year??'';
+		  	}else{$scoreA=""; $scoreB=""; $scoreC="";}
+
+
+			$call_count = $this->db->query("SELECT * FROM calling_data where user_id = '".$r->user_id."'")->num_rows();
+		  
+			
+           $data[] = array(
+				'0000'.$r->user_id??'',
+				$examName,
+				$course,
+				$study_center1,
+			    $scoreA.$scoreB.$scoreC,
+           		$fullname.'<br/> Total Calls- '.$call_count,
+                $r->user_mobile??'',
+			    $candidate_data->father_name??'',
+			    $candidate_data->mother_name??'',
+			    $dob,
+                $email,
+                $gender,
+				$category,
+				$candidate_data->father_mobile??'',
+				$candidate_data->mather_mobile??'',
+				$candidate_data->religion??'',
+                $parma_state,
+                $parma_city,
+				date("d-M-Y", strtotime($r->created_date)),
+				date("d-M-Y", strtotime($candidate_data->post_date??''))
+           );
+      }
+
+	      $result = array(
+	               	 "draw" => $draw,
+	                 "recordsTotal" => $query->num_rows(),
+	                 "recordsFiltered" => $query->num_rows(),
+	                 "data" => $data
+	      );
+
+
+      echo json_encode($result);
+      exit();
+
+	}
+}	
+
