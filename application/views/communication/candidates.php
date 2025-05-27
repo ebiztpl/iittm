@@ -723,8 +723,6 @@
         $('input[type="checkbox"]', rows).prop('checked', this.checked);
 
       });
-
-
     };
 
 
