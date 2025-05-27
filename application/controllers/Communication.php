@@ -1037,7 +1037,7 @@ class Communication extends CI_Controller
 		$id = $this->input->post('id');
 
 
-		$query = $this->db->query("SELECT um.*,aa.created_at,aa.assign_id,aa.campaign_id, cd.tag, cd.response_id FROM assignment aa INNER JOIN assignment_master am ON am.id = aa.assignment_id INNER JOIN user_master um ON um.user_id=aa.user_id LEFT JOIN calling_data cd ON cd.user_id = aa.user_id AND cd.assign_id = aa.assign_id where am.id = $id");
+		$query = $this->db->query("SELECT um.*,aa.created_at,aa.assign_id,aa.campaign_id FROM assignment aa INNER JOIN assignment_master am ON am.id = aa.assignment_id INNER JOIN user_master um ON um.user_id=aa.user_id WHERE am.id = $id");
 
 
 
@@ -1047,7 +1047,6 @@ class Communication extends CI_Controller
 		$data = [];
 		$n = 0;
 		$comp = 0;
-		$course = "";
 		foreach ($query->result() as $r) {
 
 			$campaign_id = $r->campaign_id;
@@ -1250,7 +1249,7 @@ class Communication extends CI_Controller
 			"recordsTotal" => $query->num_rows(),
 			"recordsFiltered" => $query->num_rows(),
 			"recordsComplete" => $comp,
-			// "campaign_id" => $campaign_id,
+			"campaign_id" => $campaign_id,
 			"data" => $data,
 		);
 
@@ -1484,7 +1483,7 @@ class Communication extends CI_Controller
 			"recordsTotal" => $query->num_rows(),
 			"recordsFiltered" => $query->num_rows(),
 			"recordsComplete" => $comp,
-			// "campaign_id" => $campaign_id,
+			"campaign_id" => $campaign_id,
 			"data" => $data,
 		);
 
