@@ -248,7 +248,7 @@
                           <th>Gender</th>
                           <th>Category</th>
                           <!--     <th>Father Mobile</th>
-            <th>Mother Mobile</th> -->
+                          <th>Mother Mobile</th> -->
                           <th>Religion</th>
                           <th>Parr. State</th>
                           <th>Parr. City</th>
