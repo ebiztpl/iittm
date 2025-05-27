@@ -22,6 +22,8 @@
         }
     </style>
 
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
 </head>
 
 <body class="skin-blue sidebar-mini sidebar-collapse">
@@ -53,6 +55,36 @@
             <!-- Main content -->
             <section class="content">
                 <div class="page-content">
+
+                    <div class="box">
+                        <div class="box-body">
+                            <div class="row" id="filter-section">
+                                <div class="col-sm-2">
+                                    <select class="form-control" name="tag[]" id="tag_filter" multiple>
+                                        <option value="">Select Tag</option>
+                                        <?php foreach ($tags as $tag): ?>
+                                            <option value="<?= $tag->tag_id ?>"><?= $tag->name ?></option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
+
+                                <!-- Response Dropdown -->
+                                <div class="form-group col-sm-2">
+                                    <select class="form-control" name="response_id[]" id="response_filter" multiple>
+                                        <option value="">Select Response</option>
+                                        <?php foreach ($responses as $response): ?>
+                                            <option value="<?= $response->id ?>"><?= $response->name ?></option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
+
+                                <!-- Search Button -->
+                                <div class="col-sm-2">
+                                    <button type="button" id="filterBtn" class="btn btn-success">Search</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
                     <div class="box">
                         <div class="box-body">
@@ -485,48 +517,133 @@
 
     });
 
+
     $(document).ready(function() {
-        $("#loading").show();
+        $('#tag_filter').select2({
+            placeholder: "Select Tags"
+        });
 
-        var id = $("#assignment_id").val();
+        $('#response_filter').select2({
+            placeholder: "Select Responses"
+        });
+    });
 
-        $('#item-list_wrapper').hide();
-        $('#item-list-filter').show();
 
-        $('#item-list-filter').DataTable({
-            "ajax": {
-                url: "<?php echo site_url('communication/assignment_candidates'); ?>",
-                data: {
-                    'data': id
+    $(document).ready(function() {
+        var table;
+        loadData();
+
+        function loadData(tag = '', response_id = '') {
+            var id = $("#assignment_id").val();
+
+            if (table) {
+                table.destroy();
+            }
+
+            table = $('#item-list-filter').DataTable({
+                "ajax": {
+                    url: "<?php echo site_url('communication/assignment_candidates'); ?>",
+                    type: 'POST',
+                    data: {
+                        id: id
+                    }
                 },
-                type: 'POST'
-            },
-            initComplete: function(e) {
-                console.log(e);
-                $("#loading").hide();
-                $("#campaign_id option[value='" + e.json.campaign_id + "']").attr('selected', true);
-                $("#campaign_id").attr('disabled', 'disabled');
-                $("#campaign_id_hidden").val(e.json.campaign_id);
-                $("#record").html(e.json.recordsTotal);
-                $("#complete").html(e.json.recordsComplete);
-            },
-            "fixedHeader": true,
-            "bPaginate": false,
-            "bLengthChange": false,
-            "bFilter": false,
-            "bSort": true,
-            "order": [0, "asc"],
-            "bInfo": true,
-            "bAutoWidth": false,
-            "searching": true,
-            "bRetreive": true,
-            "destroy": true,
-            dom: 'Bfrtip',
-            lengthMenu: [
-                [25, 50, -1],
-                ['25 rows', '50 rows', 'Show all']
-            ],
-            buttons: ['copy', 'csv', 'excel', 'pdf', 'print']
+                initComplete: function(e) {
+                    $("#loading").hide();
+                    $("#campaign_id option[value='" + e.json.campaign_id + "']").attr('selected', true);
+                    $("#campaign_id").attr('disabled', 'disabled');
+                    $("#campaign_id_hidden").val(e.json.campaign_id);
+                    $("#record").html(e.json.recordsTotal);
+                    $("#complete").html(e.json.recordsComplete);
+                },
+                "fixedHeader": true,
+                "bPaginate": false,
+                "bLengthChange": false,
+                "bFilter": false,
+                "bSort": true,
+                "order": [0, "asc"],
+                "bInfo": true,
+                "bAutoWidth": false,
+                "searching": true,
+                "destroy": true,
+                dom: 'Bfrtip',
+                lengthMenu: [
+                    [25, 50, -1],
+                    ['25 rows', '50 rows', 'Show all']
+                ],
+                buttons: ['copy', 'csv', 'excel', 'pdf', 'print']
+            });
+        }
+
+        // Initial load with no filters
+
+
+        // On filter button click reload with filters
+        $("#filterBtn").on('click', function() {
+
+            $("#loading").show();
+
+            var whereClauses = [];
+
+            if ($("#response_filter").val() != "") {
+                whereClauses.push('cd.response_id = ' + "'" + $("#response_filter").val() + "'");
+            }
+
+            if ($("#tag_filter").val() != "") {
+                whereClauses.push('cd.tag LIKE ' + "'%" + $("#tag_filter").val() + "%'");
+            }
+
+            var withand = whereClauses.join(" AND ");
+            if (whereClauses.length != 0) {
+                var where = ' WHERE ' + withand;
+            }
+
+            console.log(where);
+
+
+            $('#item-list_wrapper').hide();
+            $('#item-list-filter').show();
+
+            $('#item-list-filter').DataTable({
+                "ajax": {
+                    url: "<?php echo site_url('communication/assignment_candidates_filter'); ?>",
+                    data: {
+                        'data': where
+                    },
+                    type: 'POST'
+                },
+                initComplete: function(e) {
+                    $("#loading").hide();
+                },
+                "bPaginate": true,
+                "bLengthChange": false,
+                "bFilter": false,
+                "bSort": true,
+                "order": [0, "asc"],
+                "bInfo": true,
+                "bAutoWidth": false,
+                "searching": true,
+                "bRetreive": true,
+                "destroy": true,
+                dom: 'Bfrtip',
+                lengthMenu: [
+                    [25, 50, -1],
+                    ['25 rows', '50 rows', 'Show all']
+                ],
+                buttons: ['copy', 'csv', 'excel', 'pdf', 'print'],
+                "drawCallback": function(settings) {
+                    var api = this.api();
+                    var info = api.page.info();
+                    // info.recordsDisplay = filtered record count
+                    // info.recordsTotal = total records before filter (if implemented)
+                    $("#record").text(info.recordsDisplay); // update element with filtered count
+                }
+            });
+
+
+
+
+
         });
     });
 </script>
