@@ -1265,7 +1265,7 @@ class Communication extends CI_Controller
 	public function candidate_assignment_save()
 	{
 
-		$assignment_master = array('assignment_name' => $_POST['assignment_name'], 'assignment_start' => $_POST['start_date'], 'assignment_end' => $_POST['end_date'], 'created_by' => $this->session->userdata['admin_id']);
+		$assignment_master = array('assignment_name' => $_POST['assignment_name'], 'assignment_start' => $_POST['assignment_start'], 'assignment_end' => $_POST['assignment_end'], 'created_by' => $this->session->userdata['admin_id']);
 
 		$assignment_id = $this->db_lib->insert('assignment_master', $assignment_master, '');
 

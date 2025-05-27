@@ -221,11 +221,11 @@
                                 <div class="col-sm-6">
 
                                     <label>Start Date</label>
-                                    <input type="text" name="start_date" class="form-control datepicker">
+                                    <input type="text" name="assignment_start" class="form-control datepick">
                                     <br />
 
                                     <label>End Date</label>
-                                    <input type="text" name="end_date" class="form-control datepicker">
+                                    <input type="text" name="assignment_end" class="form-control datepick">
                                     <br />
 
                                     <!-- Hidden field to hold selected user_ids -->
@@ -606,6 +606,10 @@
             autoclose: true,
         });
 
+        $('.datepick').datepicker({
+            format: 'yyyy-mm-dd',
+            autoclose: true
+        });
 
         $(".js-example-basic-multiple").select2();
         $(".datepicker").datepicker("setDate", new Date());
@@ -702,6 +706,8 @@
             if (whereClauses.length != 0) {
                 var where = ' WHERE ' + withand;
             }
+
+            where += ' GROUP BY user_id';
 
             console.log(where);
 
