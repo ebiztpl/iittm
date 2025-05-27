@@ -107,7 +107,7 @@ if ($this->session->userdata['role'] == "telecaller" || $this->session->userdata
             </a>
             <ul class="treeview-menu">
 
-              <li class="<?php if ($index == 1209) echo 'active' ?>"><a href="<?php echo base_url(); ?>index.php/communication/responses"><i class="fa fa-angle-double-right"></i>Responses</a></li>
+              <li class="<?php if ($index == 1207) echo 'active' ?>"><a href="<?php echo base_url(); ?>index.php/communication/responses"><i class="fa fa-angle-double-right"></i>Responses</a></li>
 
               <li class="<?php if ($index == 1207) echo 'active' ?>"><a href="<?php echo base_url(); ?>index.php/communication/assignment_report"><i class="fa fa-angle-double-right"></i>Assignment</a></li>
 
@@ -117,7 +117,7 @@ if ($this->session->userdata['role'] == "telecaller" || $this->session->userdata
           </li>
 
 
-          <li class="<?php if ($index == 1207) echo 'active' ?> treeview">
+          <li class="<?php if ($index == 1211) echo 'active' ?> treeview">
             <a href="#">
               <i class="fa fa-table"></i>
               <span>My Reort</span>
@@ -126,7 +126,7 @@ if ($this->session->userdata['role'] == "telecaller" || $this->session->userdata
               </span>
             </a>
             <ul class="treeview-menu">
-              <li class="<?php if ($index == 1209) echo 'active' ?>"><a href="<?php echo base_url(); ?>index.php/Myreport/filter_report"><i class="fa fa-angle-double-right"></i>My Report</a></li>
+              <li class="<?php if ($index == 1211) echo 'active' ?>"><a href="<?php echo base_url(); ?>index.php/Myreport/filter_report"><i class="fa fa-angle-double-right"></i>My Report</a></li>
             </ul>
           </li>
         </ul>

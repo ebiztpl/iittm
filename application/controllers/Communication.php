@@ -1047,7 +1047,6 @@ class Communication extends CI_Controller
 		$data = [];
 		$n = 0;
 		$comp = 0;
-		$course = "";
 		foreach ($query->result() as $r) {
 
 			$campaign_id = $r->campaign_id;
@@ -1250,7 +1249,7 @@ class Communication extends CI_Controller
 			"recordsTotal" => $query->num_rows(),
 			"recordsFiltered" => $query->num_rows(),
 			"recordsComplete" => $comp,
-			// "campaign_id" => $campaign_id,
+			"campaign_id" => $campaign_id,
 			"data" => $data,
 		);
 
@@ -1484,7 +1483,7 @@ class Communication extends CI_Controller
 			"recordsTotal" => $query->num_rows(),
 			"recordsFiltered" => $query->num_rows(),
 			"recordsComplete" => $comp,
-			// "campaign_id" => $campaign_id,
+			"campaign_id" => $campaign_id,
 			"data" => $data,
 		);
 

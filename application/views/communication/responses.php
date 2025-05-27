@@ -29,7 +29,7 @@
     <!-- Left side column. contains the logo and sidebar -->
 
     <?php $this->load->view('../layout/sidemenu.php');
-    sidebar(1209);
+    sidebar(1207);
     ?>
 
     <div id="loading"><img src="<?php echo base_url(); ?>/themes/img/loader.gif" /></div>

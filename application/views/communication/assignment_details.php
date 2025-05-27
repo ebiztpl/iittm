@@ -23,6 +23,11 @@
     </style>
 
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <!-- Then load Select2 -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+
 
 </head>
 
@@ -132,7 +137,7 @@
                                 <table id="item-list-filter" class="table table-bordered table-striped table-hover ">
                                     <thead>
                                         <tr>
-                                            
+
                                             <?php if ($this->session->userdata['role'] == 'telecaller') { ?>
                                                 <th class="tbl-header">Action</th>
                                             <?php } else { ?>
@@ -225,21 +230,6 @@
 
 
                             <div class="row">
-                                <!-- <div class="col-sm-6">
-              <div class="form-group">
-                <label>Select Team Member<span style='color:red;'>*</span></label>
-                <select class="form-control" name="team_id" id="team_id" required="">
-                  <option value="">Select</option>
-                  <?php
-                    foreach ($team as $key => $teams) {
-                        echo "<option value=" . $teams->id . ">" . $teams->name . "</option>";
-                    }
-                    ?>
-                </select>
-              </div>
-            </div> -->
-
-
                                 <div class="col-sm-6">
                                     <div class="form-group">
                                         <label>Select Calling Mode<span style='color:red;'>*</span></label>
@@ -586,8 +576,8 @@
             var whereClauses = [];
 
             console.log($("#assignment_id").val());
-			
-			whereClauses.push('am.id = ' + "'" + $("#assignment_id").val() + "'");
+
+            whereClauses.push('am.id = ' + "'" + $("#assignment_id").val() + "'");
 
             if ($("#response_filter").val() != "") {
                 whereClauses.push('cd.response_id = ' + "'" + $("#response_filter").val() + "'");
