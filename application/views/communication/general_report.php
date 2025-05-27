@@ -189,7 +189,7 @@ $('#filterBtn').click(function(){
 				var where = ' WHERE ' + withand;
 			}
 
-      console.log(where);
+    
 
 			$('#item-list_wrapper').hide();
 			$('#item-list-filter').show();

@@ -55,7 +55,7 @@
             <!-- Main content -->
             <section class="content">
                 <div class="page-content">
-
+                    <input type="hidden" id="assignment_id" value="<?= $details[0]['id']; ?>">
                     <div class="box">
                         <div class="box-body">
                             <div class="row" id="filter-section">
@@ -132,7 +132,7 @@
                                 <table id="item-list-filter" class="table table-bordered table-striped table-hover ">
                                     <thead>
                                         <tr>
-                                            <input type="hidden" id="assignment_id" value="<?= $details[0]['id']; ?>">
+                                            
                                             <?php if ($this->session->userdata['role'] == 'telecaller') { ?>
                                                 <th class="tbl-header">Action</th>
                                             <?php } else { ?>
@@ -584,6 +584,10 @@
             $("#loading").show();
 
             var whereClauses = [];
+
+            console.log($("#assignment_id").val());
+			
+			whereClauses.push('am.id = ' + "'" + $("#assignment_id").val() + "'");
 
             if ($("#response_filter").val() != "") {
                 whereClauses.push('cd.response_id = ' + "'" + $("#response_filter").val() + "'");
