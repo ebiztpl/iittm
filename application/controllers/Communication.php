@@ -1174,23 +1174,26 @@ class Communication extends CI_Controller
 			}
 
 			if ($this->session->userdata['role'] == 'telecaller') {
-
 				$calling_check = $this->db->select("*")->from("calling_data")->where("assign_id = " . $r->assign_id . "")->get()->row();
 				if ($calling_check) {
-					$btn = "<b>Done</b>";
+					$firstCol = "<b>Done</b>";
 					$comp++;
 				} else {
-					$btn = '<input type="checkbox" value="' . $r->user_id . '" assign-id="' . $r->assign_id . '" data-id="' . $r->user_id . '" class="exam_status checkbox" name="user_id[]"/>';
+					$firstCol = '<input type="checkbox" value="' . $r->user_id . '" assign-id="' . $r->assign_id . '" data-id="' . $r->user_id . '" class="exam_status checkbox" name="user_id[]"/>';
 				}
+			} elseif ($this->session->userdata['role'] == 'admin') {
+				$firstCol = "<input type='checkbox' class='row-checkbox' name='select_user[]' value='$r->user_id'>";
 			} else {
 				$calling_check = $this->db->select("*")->from("calling_data")->where("assign_id = " . $r->assign_id . "")->get()->row();
 				if ($calling_check) {
-					$btn = "";
+					$firstCol = "";
 					$comp++;
 				} else {
-					$btn = '';
+					$firstCol = '';
 				}
 			}
+
+			
 
 			if (isset($candidate_data->father_name)) {
 				$fname = $candidate_data->father_name;
@@ -1236,7 +1239,8 @@ class Communication extends CI_Controller
 			}
 
 			$data[] = array(
-				$n . $btn,
+				// $n . $firstCol,
+				$firstCol,
 				$candidate_information,
 				$academic_information,
 				$communicate,
@@ -1258,7 +1262,37 @@ class Communication extends CI_Controller
 	}
 
 
+	public function candidate_assignment_save()
+	{
 
+		$assignment_master = array('assignment_name' => $_POST['assignment_name'], 'assignment_start' => $_POST['assignment_start'], 'assignment_end' => $_POST['assignment_end'], 'created_by' => $this->session->userdata['admin_id']);
+
+		$assignment_id = $this->db_lib->insert('assignment_master', $assignment_master, '');
+
+		//print_r($assignment_master); die;
+
+		if ($assignment_id) {
+			$flag = 0;
+			foreach ($_POST['user_id'] as $key => $value) {
+
+				$data = array(
+					'campaign_id' => $_POST['assign_campaign'],
+					'team_id' => $_POST['assign_team'],
+					'assignment_id' => $assignment_id,
+					'user_id' => $value,
+				);
+
+				$last_id = $this->db_lib->insert('assignment', $data, '');
+				$flag++;
+			}
+		}
+
+
+		if ($flag > 0) {
+			$this->session->set_flashdata('msg', "Assignment has been Created!");
+			redirect("communication/assignment_report");
+		}
+	}
 
 
 	public function assignment_candidates_filter()
@@ -1408,21 +1442,22 @@ class Communication extends CI_Controller
 			}
 
 			if ($this->session->userdata['role'] == 'telecaller') {
-
 				$calling_check = $this->db->select("*")->from("calling_data")->where("assign_id = " . $r->assign_id . "")->get()->row();
 				if ($calling_check) {
-					$btn = "<b>Done</b>";
+					$firstCol = "<b>Done</b>";
 					$comp++;
 				} else {
-					$btn = '<input type="checkbox" value="' . $r->user_id . '" assign-id="' . $r->assign_id . '" data-id="' . $r->user_id . '" class="exam_status checkbox" name="user_id[]"/>';
+					$firstCol = '<input type="checkbox" value="' . $r->user_id . '" assign-id="' . $r->assign_id . '" data-id="' . $r->user_id . '" class="exam_status checkbox" name="user_id[]"/>';
 				}
+			} elseif ($this->session->userdata['role'] == 'admin') {
+				$firstCol = "<input type='checkbox' class='row-checkbox' name='select_user[]' value='$r->user_id'>";
 			} else {
 				$calling_check = $this->db->select("*")->from("calling_data")->where("assign_id = " . $r->assign_id . "")->get()->row();
 				if ($calling_check) {
-					$btn = "";
+					$firstCol = "";
 					$comp++;
 				} else {
-					$btn = '';
+					$firstCol = '';
 				}
 			}
 
@@ -1470,7 +1505,8 @@ class Communication extends CI_Controller
 			}
 
 			$data[] = array(
-				$n . $btn,
+				// $n . $firstCol,
+				$firstCol,
 				$candidate_information,
 				$academic_information,
 				$communicate,
@@ -1483,7 +1519,7 @@ class Communication extends CI_Controller
 			"recordsTotal" => $query->num_rows(),
 			"recordsFiltered" => $query->num_rows(),
 			"recordsComplete" => $comp,
-			"campaign_id" => $campaign_id,
+			// "campaign_id" => $campaign_id,
 			"data" => $data,
 		);
 

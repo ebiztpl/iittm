@@ -126,18 +126,37 @@
 
                     <div class="box">
                         <div class="box-body">
-                            <span style="font-size: 20px; color: green; text-align: right; margin-left: 50px; float: right">Total Records - <span id="record">0</span></span>
 
-                            <span style="font-size: 20px; color: green; text-align: right; display: block; ">Complete - <span id="complete">0</span></span>
+
+                            <div class="clearfix mb-3">
+                                <div class="pull-right" style="display: flex; gap: 30px; align-items: center;">
+                                    <?php if ($this->session->userdata('role') == 'admin') : ?>
+                                        <button type="button" id="openAssignmentBtn" class="btn btn-success">
+                                            Add Assignment
+                                        </button>
+                                    <?php endif; ?>
+
+                                    <span style="font-size: 18px; color: green;">
+                                        Total Records - <span id="record">0</span>
+                                    </span>
+
+                                    <span style="font-size: 18px; color: green;">
+                                        Complete - <span id="complete">0</span>
+                                    </span>
+                                </div>
+                            </div>
+
                             <div style="overflow:scroll; height:500px;">
                                 <table id="item-list-filter" class="table table-bordered table-striped table-hover ">
                                     <thead>
                                         <tr>
 
-                                            <?php if ($this->session->userdata['role'] == 'telecaller') { ?>
+                                            <?php if ($this->session->userdata('role') == 'telecaller') { ?>
                                                 <th class="tbl-header">Action</th>
                                             <?php } else { ?>
-                                                <th class="tbl-header">Sr.</th>
+                                                <th class="tbl-header">
+                                                    <input type="checkbox" id="checkAll"> <!-- Admin select all -->
+                                                </th>
                                             <?php } ?>
                                             <th class="tbl-header">Candidate Information</th>
                                             <th style='width:30%;'>Academic Information</th>
@@ -150,14 +169,82 @@
                             </div>
                         </div>
                     </div>
-
-
-
                 </div>
             </section>
         </div>
 
 
+        <!-- add assignment modal -->
+        <div class="modal fade" id="assignmentModal" tabindex="-1" role="dialog" aria-labelledby="assignmentModalLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <form action="<?= site_url('communication/candidate_assignment_save') ?>" method="post" id="assignmentForm">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Assign </h5>
+                            <button type="button" class="close" data-dismiss="modal">&times;</button>
+                        </div>
+
+                        <div class="modal-body">
+                            <div class="row">
+
+                                <div class="col-sm-6">
+
+                                    <label>Assignment Name<span style="color: red">*</span></label>
+                                    <input type="text" name="assignment_name" class="form-control" required>
+                                    <br />
+
+                                    <label>Campaign<span style="color: red">*</span></label>
+                                    <select class="form-control" name="assign_campaign" id="assign_campaign" required="">
+                                        <option value="">Select</option>
+                                        <?php
+                                        foreach ($campaign as $key => $campaigns) {
+                                            echo "<option value=" . $campaigns->id . ">" . $campaigns->name . "</option>";
+                                        }
+                                        ?>
+                                    </select>
+                                    <br />
+
+                                    <label>Team/User<span style="color: red">*</span></label>
+                                    <select class="form-control" name="assign_team" id="assign_team" required="">
+                                        <option value="">Select</option>
+                                        <?php
+                                        foreach ($user as $key => $users) {
+                                            echo "<option value=" . $users->admin_id . ">" . $users->admin_name . "</option>";
+                                        }
+                                        ?>
+
+                                    </select>
+                                    <br />
+
+                                </div>
+
+                                <div class="col-sm-6">
+
+                                    <label>Start Date</label>
+                                    <input type="text" name="assignment_start" class="form-control datepick">
+                                    <br />
+
+                                    <label>End Date</label>
+                                    <input type="text" name="assignment_end" class="form-control datepick">
+                                    <br />
+
+                                    <!-- Hidden field to hold selected user_ids -->
+                                    <div id="selectedUsersContainer"></div>
+
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="modal-footer">
+                            <button type="submit" class="btn btn-primary">Assign</button>
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- create tag modal -->
         <div class="modal fade" id="tag-create-modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true" data-backdrop="static" data-keyboard="false" style="z-index: 999999;">
             <div class="modal-dialog modal-dialog-centered modal-sm" role="document" style="margin-top: 15%;">
                 <div class="modal-content">
@@ -177,6 +264,7 @@
             </div>
         </div>
 
+        <!-- Candidate Calls Response modal -->
         <div class="modal fade" id="exam_status" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true" data-backdrop="static" data-keyboard="false">
             <div class="modal-dialog modal-dialog-centered" role="document">
                 <div class="modal-content">
@@ -325,6 +413,7 @@
         </div>
 
 
+        <!-- edit Candidate Calls Response modal -->
         <div class="modal fade" id="exam_status_edit" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true" data-backdrop="static" data-keyboard="false">
             <div class="modal-dialog modal-dialog-centered" role="document">
                 <div class="modal-content">
@@ -485,6 +574,27 @@
 
 </html>
 
+<script>
+    $('#openAssignmentBtn').click(function() {
+        const selected = $('.row-checkbox:checked');
+
+        if (selected.length === 0) {
+            alert("Please select at least one candidate.");
+            return;
+        }
+
+        // Clear any previous selections in modal
+        $('#selectedUsersContainer').html('');
+
+        selected.each(function() {
+            const userId = $(this).val();
+            $('#selectedUsersContainer').append('<input type="hidden" name="user_id[]" value="' + userId + '">');
+        });
+
+        // Open modal after populating data
+        $('#assignmentModal').modal('show');
+    });
+</script>
 
 <script>
     $(document).ready(function() {
@@ -496,11 +606,20 @@
             autoclose: true,
         });
 
+        $('.datepick').datepicker({
+            format: 'yyyy-mm-dd',
+            autoclose: true
+        });
+
         $(".js-example-basic-multiple").select2();
         $(".datepicker").datepicker("setDate", new Date());
 
         $(".timepicker").timepicker();
 
+        $('#checkAll').on('change', function() {
+            var checked = $(this).prop('checked');
+            $('.row-checkbox').prop('checked', checked);
+        });
     });
 
 
@@ -587,6 +706,8 @@
             if (whereClauses.length != 0) {
                 var where = ' WHERE ' + withand;
             }
+
+            where += ' GROUP BY user_id';
 
             console.log(where);
 
