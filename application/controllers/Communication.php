@@ -3250,5 +3250,20 @@ class Communication extends CI_Controller
       exit();
 
 	}
+
+	public function update_assignment_status()
+	{
+		$assignment_id = $this->input->post('assignment_id');
+		$status = $this->input->post('report_status');
+		$remark = $this->input->post('report_remark');
+
+
+		$this->db->where('id', $assignment_id)->update('assignment_master', [
+			'report_status' => $status,
+			'report_remark' => $remark
+		]);
+
+		echo json_encode(['status' => 'success']);
+	}
 }	
 
