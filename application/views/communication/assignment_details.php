@@ -62,7 +62,6 @@
                             <div class="row" id="filter-section">
                                 <div class="col-sm-2">
                                     <select class="form-control" name="tag[]" id="tag_filter" multiple>
-                                        <option value="">Select Tag</option>
                                         <?php foreach ($tags as $tag): ?>
                                             <option value="<?= $tag->tag_id ?>"><?= $tag->name ?></option>
                                         <?php endforeach; ?>
@@ -72,7 +71,6 @@
                                 <!-- Response Dropdown -->
                                 <div class="form-group col-sm-2">
                                     <select class="form-control" name="response_id[]" id="response_filter" multiple>
-                                        <option value="">Select Response</option>
                                         <?php foreach ($responses as $response): ?>
                                             <option value="<?= $response->id ?>"><?= $response->name ?></option>
                                         <?php endforeach; ?>
@@ -585,26 +583,21 @@
             //     whereClauses.push('cd.tag LIKE ' + "'%" + $("#tag_filter").val() + "%'");
             // }
 
-            
+
             var selectedResponses = $("#response_filter").val(); // gets array of selected values
             if (selectedResponses && selectedResponses.length > 0) {
-                // Convert to SQL-friendly quoted strings
                 var responseList = selectedResponses.map(function(val) {
                     return "'" + val + "'";
                 }).join(",");
-
-                // Push SQL WHERE clause
                 whereClauses.push('cd.response_id IN (' + responseList + ')');
             }
-            
+
 
             if ($("#tag_filter").val() != null && $("#tag_filter").val().length > 0) {
-                var tagIDs = $("#tag_filter").val(); // Already an array
-
+                var tagIDs = $("#tag_filter").val();
                 var tagConditions = tagIDs.map(function(tagID) {
                     return "FIND_IN_SET('" + tagID + "', cd.tag)";
                 });
-
                 whereClauses.push("(" + tagConditions.join(" OR ") + ")");
             }
 
@@ -630,6 +623,9 @@
                 },
                 initComplete: function(e) {
                     $("#loading").hide();
+
+                    $("#response_filter").val(null).trigger("change");
+                    $("#tag_filter").val(null).trigger("change");
                 },
                 "bPaginate": true,
                 "bLengthChange": false,
