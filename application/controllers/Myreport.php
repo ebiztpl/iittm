@@ -144,6 +144,8 @@ class Myreport extends CI_Controller
         $data['to_date'] = $to_date;
         $data['assignment_id'] = $assignment_id;
         $data['response_id'] = $response_id;
+        $data['tags'] = $this->db->get('tags')->result();
+        $data['responses'] = $this->db->get('responses')->result();
 
         // Load view
         $this->load->view('myreport/report_details', $data);
@@ -308,7 +310,185 @@ class Myreport extends CI_Controller
 
         echo json_encode([
             "draw" => $draw,
-            "data" => $data
+            "data" => $data,
+            "recordsTotal" => $query->num_rows(),
+            "recordsFiltered" => $query->num_rows(),
+            "recordsComplete" => $completed,
+        ]);
+    }
+
+    public function report_details_display_filter()
+    {
+        $draw = intval($this->input->post("draw"));
+        $assignment_id = $this->input->post('assignment_id');
+        $response_ids = $this->input->post('response_ids'); // could be array
+        $tag_ids = $this->input->post('tag_ids');           // could be array
+        $from_date = $this->input->post('from_date');
+        $to_date = $this->input->post('to_date');
+        
+        $where = "WHERE am.id = ?";
+        $params = [$assignment_id];
+
+        if (!empty($from_date) && !empty($to_date)) {
+            $where .= " AND DATE(cd.call_date) BETWEEN ? AND ?";
+            $params[] = $from_date;
+            $params[] = $to_date;
+        }
+
+        if (!empty($response_ids)) {
+            $where .= " AND cd.response_id = ?";
+            $params[] = $response_id;
+        }
+
+        if (!empty($tag_ids)) {
+            $tagConditions = [];
+            foreach ($tag_ids as $tag_id) {
+                $tagConditions[] = "FIND_IN_SET(?, cd.tag)";
+                $params[] = $tag_id;
+            }
+            $where .= " AND (" . implode(" OR ", $tagConditions) . ")";
+        }
+
+
+        // Main query fetching assignments with user and master data
+        $query = $this->db->query("
+            SELECT DISTINCT um.*, aa.created_at, aa.assign_id, aa.campaign_id, am.id as course_id
+            FROM assignment aa
+            INNER JOIN assignment_master am ON am.id = aa.assignment_id
+            INNER JOIN calling_data cd ON cd.user_id = aa.user_id AND cd.assign_id = aa.assign_id
+            INNER JOIN user_master um ON um.user_id = aa.user_id
+            $where
+        ", $params);
+
+        $data = [];
+        $n = 0;
+        $completed = 0;
+
+        foreach ($query->result() as $r) {
+            $n++;
+            $user_id = $r->user_id;
+
+            // Fetch candidate data
+            $candidate_data = $this->db->where([
+                'mobile_verified_id' => $user_id,
+                'duplicate' => 0
+            ])->get('candidate_data')->row();
+
+            if (!$candidate_data) continue;
+
+            // Candidate full name with link
+            $fullname = "<a href='" . site_url("journey/show_journey/{$user_id}") . "' target='_blank'>{$candidate_data->first_name} {$candidate_data->middle_name} {$candidate_data->last_name}</a>";
+            $course = ($candidate_data->course_name == 1) ? "BBA" : (($candidate_data->course_name == 2) ? "MBA" : "");
+            $email = $candidate_data->email_id;
+            $gender = $candidate_data->gender;
+            $category = $candidate_data->category;
+            $dob = $candidate_data->dob;
+            $father_name = $candidate_data->father_name ?? "";
+            $mother_name = $candidate_data->mother_name ?? "";
+            $parma_state = $this->db->select('name')->where('id', $candidate_data->parma_state)->get('states')->row('name') ?? '';
+            $parma_city = $this->db->select('name')->where('id', $candidate_data->parma_city)->get('cities')->row('name') ?? '';
+            $study_center1 = $candidate_data->study_centre_1 ?? '';
+
+            $candidate_info = "
+                <b>Enroll No.: </b> 0000{$user_id}<br/>
+                <b>Full Name: </b>{$fullname}<br/>
+                <b>Mobile :</b> {$r->user_mobile}<br/>
+                <b>Father Name: </b>{$father_name}<br/>
+                <b>Mother Name: </b>{$mother_name}<br/>
+                <b>DOB: </b>{$dob}<br/>
+                <b>Email: </b>{$email}<br/>
+                <b>Gender: </b>{$gender}";
+
+            $academic_info = "
+                <b>Course: </b>{$course}<br/>
+                <b>Study Center: </b>{$study_center1}<br/>
+                <b>Category: </b>{$category}<br/>
+                <b>State: </b>{$parma_state}<br/>
+                <b>City: </b>{$parma_city}<br/>
+                <b>Enroll DateTime: </b>" . date("d-M-Y", strtotime($r->created_at));
+
+            // Build communication query with filters (join with calling_data)
+            $comm_query = "
+                SELECT cd.*, admin.admin_name as tname, mode.name as mname, campaign.name as cname, responses.name as rname 
+                FROM calling_data cd
+                INNER JOIN admin ON admin.admin_id = cd.team_id
+                INNER JOIN mode ON mode.id = cd.mode
+                INNER JOIN campaign ON campaign.id = cd.campaign_id
+                INNER JOIN responses ON responses.id = cd.response_id
+                WHERE cd.user_id = ? AND cd.assign_id = ?
+            ";
+            $comm_params = [$user_id, $r->assign_id];
+
+            if (!empty($response_id)) {
+                $comm_query .= " AND cd.response_id = ?";
+                $comm_params[] = $response_id;
+            }
+
+            if (!empty($from_date) && !empty($to_date)) {
+                $comm_query .= " AND DATE(cd.call_date) BETWEEN ? AND ?";
+                $comm_params[] = $from_date;
+                $comm_params[] = $to_date;
+            }
+
+            $comm_query .= " ORDER BY cd.call_date ASC";
+
+            $communication = $this->db->query($comm_query, $comm_params)->result_array();
+
+            $communicate = '';
+            foreach ($communication as $comm) {
+                $tags = '';
+                if (!empty($comm['tag'])) {
+                    $tag_ids = explode(',', $comm['tag']);
+                    foreach ($tag_ids as $tag_id) {
+                        $tag_name = $this->db->select('name')->where('tag_id', $tag_id)->get('tags')->row('name');
+                        if ($tag_name) {
+                            $tags .= "<span class='badge badge-primary'>{$tag_name}</span> &nbsp;";
+                        }
+                    }
+                }
+
+                $communicate .= "<div class='tracking-item'>
+                    <div class='tracking-date'><b>DateTime: </b>" . date('M d, Y', strtotime($comm['call_date'])) . " <span>" . date('h:i A', strtotime($comm['call_time'])) . "</span></div>
+                    <div class='tracking-content'>
+                        <b>Campaign: </b><span style='color:red; font-size:18px; padding-bottom:10px;'>{$comm['cname']}</span><br/>
+                        <b>Calling Team: </b>{$comm['tname']}<br/>
+                        <b>Communication Mode: </b>{$comm['mname']}<br/>
+                        <b>Call Action: </b>{$comm['call_action']}<br/>
+                        <b>Call Response: </b>{$comm['rname']}<br/>
+                        <b>Remark: </b>{$comm['notes']}<br/>
+                        <b>Tags: </b>{$tags}
+                    </div>
+                </div>";
+            }
+
+            $checkbox_html = '';
+            $calling_check = $this->db->select("*")->from("calling_data")->where("assign_id = " . $r->assign_id . "")->get()->row();
+
+            if ($this->session->userdata('role') == 'telecaller') {
+                if ($calling_check) {
+                    $checkbox_html = "<b>Done</b>";
+                    $completed++;
+                } else {
+                    $checkbox_html = "<input type='checkbox' value='{$user_id}' assign-id='{$r->assign_id}' class='exam_status checkbox' name='user_id[]'/>";
+                }
+            } elseif ($calling_check) {
+                $completed++;
+            }
+
+            $data[] = [
+                $n . ". " . $checkbox_html,
+                $candidate_info,
+                $academic_info,
+                $communicate,
+            ];
+        }
+
+        echo json_encode([
+            "draw" => $draw,
+            "data" => $data,
+            "recordsTotal" => $query->num_rows(),
+            "recordsFiltered" => $query->num_rows(),
+            "recordsComplete" => $completed,
         ]);
     }
 }

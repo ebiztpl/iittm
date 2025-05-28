@@ -623,9 +623,6 @@
                 },
                 initComplete: function(e) {
                     $("#loading").hide();
-
-                    $("#response_filter").val(null).trigger("change");
-                    $("#tag_filter").val(null).trigger("change");
                 },
                 "bPaginate": true,
                 "bLengthChange": false,
