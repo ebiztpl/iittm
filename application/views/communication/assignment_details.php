@@ -516,10 +516,12 @@
 
 
     $(document).ready(function() {
+
         var table;
         loadData();
 
         function loadData(tag = '', response_id = '') {
+            $("#loading").show();
             var id = $("#assignment_id").val();
 
             if (table) {
@@ -575,13 +577,37 @@
 
             whereClauses.push('am.id = ' + "'" + $("#assignment_id").val() + "'");
 
-            if ($("#response_filter").val() != "") {
-                whereClauses.push('cd.response_id = ' + "'" + $("#response_filter").val() + "'");
+            // if ($("#response_filter").val() != "") {
+            //     whereClauses.push('cd.response_id = ' + "'" + $("#response_filter").val() + "'");
+            // }
+
+            // if ($("#tag_filter").val() != "") {
+            //     whereClauses.push('cd.tag LIKE ' + "'%" + $("#tag_filter").val() + "%'");
+            // }
+
+            
+            var selectedResponses = $("#response_filter").val(); // gets array of selected values
+            if (selectedResponses && selectedResponses.length > 0) {
+                // Convert to SQL-friendly quoted strings
+                var responseList = selectedResponses.map(function(val) {
+                    return "'" + val + "'";
+                }).join(",");
+
+                // Push SQL WHERE clause
+                whereClauses.push('cd.response_id IN (' + responseList + ')');
+            }
+            
+
+            if ($("#tag_filter").val() != null && $("#tag_filter").val().length > 0) {
+                var tagIDs = $("#tag_filter").val(); // Already an array
+
+                var tagConditions = tagIDs.map(function(tagID) {
+                    return "FIND_IN_SET('" + tagID + "', cd.tag)";
+                });
+
+                whereClauses.push("(" + tagConditions.join(" OR ") + ")");
             }
 
-            if ($("#tag_filter").val() != "") {
-                whereClauses.push('cd.tag LIKE ' + "'%" + $("#tag_filter").val() + "%'");
-            }
 
             var withand = whereClauses.join(" AND ");
             if (whereClauses.length != 0) {
@@ -629,11 +655,6 @@
                     $("#record").text(info.recordsDisplay); // update element with filtered count
                 }
             });
-
-
-
-
-
         });
     });
 </script>

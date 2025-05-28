@@ -1011,7 +1011,14 @@ class Communication extends CI_Controller
 		$team = $this->db->select('*')->from('team')->get()->result();
 		$campaign = $this->db->select('*')->from('campaign')->get()->result();
 		$mode = $this->db->select('*')->from('mode')->get()->result();
-		$responses = $this->db->select('*')->from('responses')->get()->result();
+		$responses = $this->db
+			->select('r.id, r.name')
+			->from('responses r')
+			->join('assignment a', 'a.campaign_id = r.campaign_id')
+			->where('a.assignment_id', $id)
+			->group_by('r.id')
+			->get()
+			->result();
 		$tags = $this->db->select('*')->from('tags')->get()->result();
 		$user = $this->db->select('*')->from('admin')->where('role', 'telecaller')->get()->result();
 
@@ -1483,7 +1490,7 @@ class Communication extends CI_Controller
 			"recordsTotal" => $query->num_rows(),
 			"recordsFiltered" => $query->num_rows(),
 			"recordsComplete" => $comp,
-			"campaign_id" => $campaign_id,
+			// "campaign_id" => $campaign_id,
 			"data" => $data,
 		);
 
