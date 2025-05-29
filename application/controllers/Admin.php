@@ -2106,6 +2106,8 @@ $duplicate = $duplicate_query->row('duplicate') ?? 0;
 	   
 	   	$gdpi = $this->db->query("SELECT count(*) as count from exam_master em INNER JOIN candidate_exam ce on ce.exam_id = em.id INNER JOIN candidate_result cr on cr.link_id = ce.id where em.exam_type='gdpi' and cr.exam_status='pass'")->row('count');
 
+	   	$entrance = $this->db->query("SELECT count(*) as count from exam_master em INNER JOIN candidate_exam ce on ce.exam_id = em.id INNER JOIN candidate_result cr on cr.link_id = ce.id where em.exam_type='entrance' and cr.exam_status='pass'")->row('count');
+
 
 		$gdpi_notint = $this->db->query("SELECT count(*) as count from exam_master em INNER JOIN candidate_exam ce on ce.exam_id = em.id INNER JOIN candidate_result cr on cr.link_id = ce.id INNER JOIN assignment aa on aa.user_id = ce.user_id where em.exam_type='gdpi' and aa.status = 1")->row('count');
 
@@ -2118,7 +2120,7 @@ $duplicate = $duplicate_query->row('duplicate') ?? 0;
 			->get()
 			->result();
 
-		$this->load->view($this->folder."new_dashboard",array('balance'=>$response,'total_regis'=>$total_regis,'today_candidate'=>$today_candidate,'total_inc'=>$total_inc,'today_inc'=>$today_inc,'total_fee'=>$total_fee,'today_fee'=>$today_fee,'category'=>$category,'gender'=>$gender,'academic'=>$academic,'religion'=>$religion,'study_center1'=>$study_center1,'study_center2'=>$study_center2,'study_center3'=>$study_center3,'study_center4'=>$study_center4,'study_center5'=>$study_center5,'gdpi_center_1'=>$gdpi_center_1,'gdpi_center_2'=>$gdpi_center_2,'gdpi_center_3'=>$gdpi_center_3,'gdpi_center_4'=>$gdpi_center_4,'gdpi_center_5'=>$gdpi_center_5,'Appearing'=>$Appearing,'candidate'=>$ee,'settelment'=>$settelment,'fees'=>$fee_data,'source_chart'=>$source_data,'admission'=>$admission, 'notinterested' => $notinterested,'in_not_interested' => $in_not_interested, 'duplicate' => $duplicate,'gdpi'=>$gdpi,'gdpi_notint' => $gdpi_notint, 'bulklead' => $bulklead));
+		$this->load->view($this->folder."new_dashboard",array('balance'=>$response,'total_regis'=>$total_regis,'today_candidate'=>$today_candidate,'total_inc'=>$total_inc,'today_inc'=>$today_inc,'total_fee'=>$total_fee,'today_fee'=>$today_fee,'category'=>$category,'gender'=>$gender,'academic'=>$academic,'religion'=>$religion,'study_center1'=>$study_center1,'study_center2'=>$study_center2,'study_center3'=>$study_center3,'study_center4'=>$study_center4,'study_center5'=>$study_center5,'gdpi_center_1'=>$gdpi_center_1,'gdpi_center_2'=>$gdpi_center_2,'gdpi_center_3'=>$gdpi_center_3,'gdpi_center_4'=>$gdpi_center_4,'gdpi_center_5'=>$gdpi_center_5,'Appearing'=>$Appearing,'candidate'=>$ee,'settelment'=>$settelment,'fees'=>$fee_data,'source_chart'=>$source_data,'admission'=>$admission, 'notinterested' => $notinterested,'in_not_interested' => $in_not_interested, 'duplicate' => $duplicate,'gdpi'=>$gdpi, 'entrance' => $entrance,'gdpi_notint' => $gdpi_notint, 'bulklead' => $bulklead));
 	}
 
 
@@ -2471,11 +2473,13 @@ $duplicate = $duplicate_query->row('duplicate') ?? 0;
 			
 			$gdpi = $this->db->query("SELECT count(*) as count from exam_master em INNER JOIN candidate_exam ce on ce.exam_id = em.id INNER JOIN user_master um on um.user_id = ce.user_id INNER JOIN candidate_result cr on cr.link_id = ce.id where em.exam_type='gdpi' and cr.exam_status='pass' and um.course_id = $course_id")->row('count');
 
+			$entrance = $this->db->query("SELECT count(*) as count from exam_master em INNER JOIN candidate_exam ce on ce.exam_id = em.id INNER JOIN user_master um on um.user_id = ce.user_id INNER JOIN candidate_result cr on cr.link_id = ce.id where em.exam_type='entrance' and cr.exam_status='pass' and um.course_id = $course_id")->row('count');
+
 
 		$gdpi_notint = $this->db->query("SELECT count(*) as count from exam_master em INNER JOIN candidate_exam ce on ce.exam_id = em.id INNER JOIN user_master um on um.user_id = ce.user_id  INNER JOIN candidate_result cr on cr.link_id = ce.id INNER JOIN assignment aa on aa.user_id = ce.user_id where em.exam_type='gdpi' and aa.status = 1 and um.course_id = $course_id")->row('count');
 			
 			
-            $ram = array('total_regis' => $total_regis, 'today_candidate' => $today_candidate, 'total_inc' => $total_inc, 'duplicate' => $duplicate, 'today_inc' => $today_inc, 'total_fee' => $total_fee, 'today_fee' => $today_fee, 'category' => $category, 'gender' => $gender, 'religion' => $religion, 'academic' => $academic, 'Appearing' => $Appearing, 'study_center1' => $study_center1, 'study_center2' => $study_center2, 'study_center3' => $study_center3, 'study_center4' => $study_center4, 'study_center5' => $study_center5, 'gdpi_center_1' => $gdpi_center_1, 'gdpi_center_2' => $gdpi_center_2, 'gdpi_center_3' => $gdpi_center_3, 'gdpi_center_4' => $gdpi_center_4, 'gdpi_center_5' => $gdpi_center_5,'admission' => $admission,'notinterested'=>$notinterested, 'in_not_interested' =>$in_not_interested,'gdpi'=>$gdpi,'gdpi_notint' => $gdpi_notint);
+            $ram = array('total_regis' => $total_regis, 'today_candidate' => $today_candidate, 'total_inc' => $total_inc, 'duplicate' => $duplicate, 'today_inc' => $today_inc, 'total_fee' => $total_fee, 'today_fee' => $today_fee, 'category' => $category, 'gender' => $gender, 'religion' => $religion, 'academic' => $academic, 'Appearing' => $Appearing, 'study_center1' => $study_center1, 'study_center2' => $study_center2, 'study_center3' => $study_center3, 'study_center4' => $study_center4, 'study_center5' => $study_center5, 'gdpi_center_1' => $gdpi_center_1, 'gdpi_center_2' => $gdpi_center_2, 'gdpi_center_3' => $gdpi_center_3, 'gdpi_center_4' => $gdpi_center_4, 'gdpi_center_5' => $gdpi_center_5,'admission' => $admission,'notinterested'=>$notinterested, 'in_not_interested' =>$in_not_interested,'gdpi'=>$gdpi, 'entrance' => $entrance, 'gdpi_notint' => $gdpi_notint);
             echo json_encode($ram);
         }
     }

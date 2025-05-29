@@ -22,8 +22,8 @@
         }
     </style>
 
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <!-- <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> -->
 
 
 </head>
@@ -124,7 +124,7 @@
 
         <?php $this->load->view('../layout/footer.php'); ?>
 
-
+        <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
         <script type="text/javascript" language="javascript" src="https://cdn.datatables.net/buttons/1.6.1/js/dataTables.buttons.min.js"></script>
         <script type="text/javascript" language="javascript" src="https://cdn.datatables.net/buttons/1.6.1/js/buttons.flash.min.js"></script>
         <script type="text/javascript" language="javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
@@ -164,11 +164,9 @@
                             d.from_date = fromDate;
                             d.to_date = toDate;
                         },
-                        // complete: function(e) {
-                        //     $("#loading").hide();
-                        //     $("#record").html(e.json.recordsTotal);
-                        //     $("#complete").html(e.json.recordsComplete);
-                        // }
+                        complete: function(e) {
+                            $("#loading").hide();
+                        }
                     },
                     columns: [{
                             data: 0
@@ -203,6 +201,7 @@
                     ],
                     buttons: ['copy', 'csv', 'excel', 'pdf', 'print'],
                     "drawCallback": function(settings) {
+                        $("#loading").hide();
                         var api = this.api();
                         var info = api.page.info();
                         $("#record").text(info.recordsDisplay);
@@ -221,10 +220,11 @@
                             url: "<?php echo site_url('Myreport/report_details_display_filter'); ?>",
                             data: function(d) {
                                 d.assignment_id = $("#assignment_id").val();
-                                d.response_ids = $("#response_filter").val(); // array
-                                d.tag_ids = $("#tag_filter").val(); // array
-                                d.from_date = $("#from_date").val();
-                                d.to_date = $("#to_date").val();
+                                d.response_id = responseId;
+                                d.from_date = fromDate;
+                                d.to_date = toDate;
+                                d.response_id_filter = $("#response_filter").val(); // array
+                                d.tag_ids = $("#tag_filter").val();
                             },
                             type: 'POST'
                         },

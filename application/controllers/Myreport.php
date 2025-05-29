@@ -46,6 +46,7 @@ class Myreport extends CI_Controller
         if (empty($team_id)) {
             $team_id = $this->session->userdata('admin_id');
         }
+        
 
         // 1. Fetch assignment names
         $this->db->distinct();
@@ -180,11 +181,11 @@ class Myreport extends CI_Controller
             SELECT DISTINCT um.*, aa.created_at, aa.assign_id, aa.campaign_id, am.id as course_id
             FROM assignment aa
             INNER JOIN assignment_master am ON am.id = aa.assignment_id
-            INNER JOIN calling_data cd ON cd.user_id = aa.user_id AND cd.assign_id = aa.assign_id
+            INNER JOIN calling_data cd
             INNER JOIN user_master um ON um.user_id = aa.user_id
             $where
         ", $params);
-
+        
         $data = [];
         $n = 0;
         $completed = 0;
@@ -313,7 +314,7 @@ class Myreport extends CI_Controller
             "data" => $data,
             "recordsTotal" => $query->num_rows(),
             "recordsFiltered" => $query->num_rows(),
-            "recordsComplete" => $completed,
+            // "recordsComplete" => $completed,
         ]);
     }
 
@@ -321,13 +322,22 @@ class Myreport extends CI_Controller
     {
         $draw = intval($this->input->post("draw"));
         $assignment_id = $this->input->post('assignment_id');
-        $response_ids = $this->input->post('response_ids'); // could be array
+
+        $response_id = $this->input->post('response_id');
+
+        $response_id_filter = $this->input->post('response_id_filter'); // could be array
         $tag_ids = $this->input->post('tag_ids');           // could be array
         $from_date = $this->input->post('from_date');
         $to_date = $this->input->post('to_date');
-        
+
         $where = "WHERE am.id = ?";
         $params = [$assignment_id];
+
+        if (!empty($response_id_filter) && is_array($response_id_filter)) {
+            $placeholders = implode(',', array_fill(0, count($response_id_filter), '?'));
+            $where .= " AND cd.response_id IN ($placeholders)";
+            $params = array_merge($params, $response_id_filter);
+        }           
 
         if (!empty($from_date) && !empty($to_date)) {
             $where .= " AND DATE(cd.call_date) BETWEEN ? AND ?";
@@ -335,7 +345,7 @@ class Myreport extends CI_Controller
             $params[] = $to_date;
         }
 
-        if (!empty($response_ids)) {
+        if (!empty($response_id)) {
             $where .= " AND cd.response_id = ?";
             $params[] = $response_id;
         }

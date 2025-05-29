@@ -356,11 +356,17 @@
                   </button>
                 </div>
               </div>
-              <div class="box-body no-padding" style="">
+              <div class="box-body no-padding">
                 <ul class="nav nav-pills nav-stacked">
                   <li>
                     <a href="#"><i class="fa fa-users"></i> GDPI Done
                       <span class="label label-info pull-right" style="font-size: 15px;">{{gdpi}}</span>
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="#"><i class="fa fa-users"></i> Entrance Test
+                      <span class="label label-info pull-right" style="font-size: 15px;">{{entrance}}</span>
                     </a>
                   </li>
 
@@ -581,6 +587,7 @@
           $scope.bulklead = <?php echo json_encode($bulklead) ?>;
           $scope.admission = <?php echo $admission ?>;
           $scope.gdpi = <?php echo $gdpi ?>;
+          $scope.entrance = <?php echo $entrance ?>;
           $scope.gdpi_notint = <?php echo $gdpi_notint ?>;
           $scope.notinterested = <?php echo $notinterested ?>;
           $scope.in_not_interested = <?php echo $in_not_interested ?>;
@@ -865,6 +872,7 @@
               $scope.duplicate = response.data['duplicate'];
               $scope.admission = response.data['admission'];
               $scope.gdpi = response.data['gdpi'];
+              $scope.entrance = response.data['entrance'];
               $scope.gdpi_notint = response.data['gdpi_notint'];
               $scope.notinterested = response.data['notinterested'];
               $scope.in_not_interested = response.data['in_not_interested'];

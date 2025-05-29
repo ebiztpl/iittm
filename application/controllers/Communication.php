@@ -1031,7 +1031,6 @@ class Communication extends CI_Controller
 			'responses' => $responses,
 			'tags' => $tags,
 			'user' => $user,
-			'tags' => $tags
 		));
 	}
 
@@ -1044,7 +1043,7 @@ class Communication extends CI_Controller
 		$id = $this->input->post('id');
 
 
-		$query = $this->db->query("SELECT um.*,aa.created_at,aa.assign_id,aa.campaign_id FROM assignment aa INNER JOIN assignment_master am ON am.id = aa.assignment_id INNER JOIN user_master um ON um.user_id=aa.user_id WHERE am.id = $id");
+		$query = $this->db->query("SELECT DISTINCT um.*,aa.created_at,aa.assign_id,aa.campaign_id FROM assignment aa INNER JOIN assignment_master am ON am.id = aa.assignment_id INNER JOIN user_master um ON um.user_id=aa.user_id WHERE am.id = $id");
 
 
 
@@ -1277,7 +1276,7 @@ class Communication extends CI_Controller
 		$whr = $this->input->post('data');
 
 
-		$query = $this->db->query("SELECT um.*,aa.created_at,aa.assign_id,aa.campaign_id, cd.tag, cd.response_id FROM assignment aa INNER JOIN assignment_master am ON am.id = aa.assignment_id INNER JOIN user_master um ON um.user_id=aa.user_id LEFT JOIN calling_data cd ON cd.user_id = aa.user_id AND cd.assign_id = aa.assign_id $whr");
+		$query = $this->db->query("SELECT DISTINCT um.*,aa.created_at,aa.assign_id,aa.campaign_id, cd.tag, cd.response_id FROM assignment aa INNER JOIN assignment_master am ON am.id = aa.assignment_id INNER JOIN user_master um ON um.user_id=aa.user_id LEFT JOIN calling_data cd ON cd.user_id = aa.user_id AND cd.assign_id = aa.assign_id $whr");
 
 
 
