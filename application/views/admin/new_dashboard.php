@@ -454,8 +454,7 @@
                 <ul class="nav nav-pills nav-stacked">
                   <?php foreach ($bulklead as $row): ?>
                     <li>
-                      <!-- <a href="<?php echo base_url('dashboard_filter/bulklead/' . $course . '/' . $row->id); ?>"> -->
-                      <a href="">
+                      <a ng-href="bulkleaddata/<?php echo $row->id; ?>">
                         <i class="fa fa-database"></i> <?php echo ucfirst($row->title); ?>
                         <span class="label label-success pull-right" style="font-size: 15px;">
                           <?php echo $row->count; ?>

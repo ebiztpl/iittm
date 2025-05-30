@@ -98,7 +98,7 @@
                                             <td><?php if ($assignments->assignment_end != '0000-00-00') {
                                                     echo date('d-m-Y', strtotime($assignments->assignment_end));
                                                 } ?></td>
-                                            <td>
+                                            <td class="remark">
                                                 <?php if ($this->session->userdata('role') === 'admin'): ?>
                                                     <?= $assignments->report_remark ?>
                                                 <?php endif; ?>
@@ -114,6 +114,7 @@
                                                         class="btn btn-sm status-btn <?= ($assignments->report_status === 'closed' ? 'btn-danger' : 'btn-success') ?>"
                                                         data-id="<?= $assignments->id ?>"
                                                         data-status="<?= $assignments->report_status ?>">
+
                                                         <?= ($assignments->report_status === 'closed' ? 'Closed' : 'In Progress') ?>
                                                     </button>
                                                 <?php endif; ?>
@@ -279,6 +280,8 @@
                 $('#statusModal').modal('hide');
 
                 const newStatus = $('select[name="report_status"]').val();
+                const newRemark = $('textarea[name="report_remark"]').val();
+
                 if (newStatus === 'closed') {
                     activeButton
                         .removeClass('btn-success')
@@ -292,6 +295,7 @@
                         .text('In Progress...')
                         .data('status', 'in_progress');
                 }
+                activeButton.closest('tr').find('.remark').text(newRemark);
             },
             error: function() {
                 alert('Failed to update status.');
