@@ -265,7 +265,7 @@
 
         $('#assignment_id').val(id);
         $('#statusForm')[0].reset();
-        $('select[name="report_status"]').val(current);
+        // $('select[name="report_status"]').val(current);
         $('#statusModal').modal('show');
     });
 

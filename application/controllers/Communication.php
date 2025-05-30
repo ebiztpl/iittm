@@ -810,46 +810,46 @@ class Communication extends CI_Controller
 	public function calling_data_update()
 	{
 
-		
-		$flag = 0; $check=array(); $msg="";
-		
-			$data = array(
-				'call_date' => date('Y-m-d',strtotime($_POST['edit_call_date'])),
-				'call_time' => $_POST['edit_call_time'],
-				'mode' => $_POST['edit_mode_id'],
-				'call_action' => $_POST['edit_call_action'],
-				'response_id' => $_POST['edit_response_id'],
-				'correct_email' => $_POST['edit_correct_email'],
-				'correct_mobile' => $_POST['edit_correct_mobile'],
-				'notes' => $_POST['edit_notes'],
-				'tag'=> implode(',', $_POST['edit_tags'])
-			);
 
-		
-			if(isset($_POST['edit_status'])?$_POST['edit_status']:"" == 1){
-				
-				$update = array('status' => 1);
-				$where = "user_id = ".$_POST['edit_user_id']." AND assign_id = ".$_POST['edit_assign_id'];
-				$update = $this->db_lib->update('assignment', $update, $where);
-			} 
+		$flag = 0;
+		$check = array();
+		$msg = "";
 
-			$where_call = "id = ".$_POST['edit_calling_id'];
-			$calling_update = $this->db_lib->update('calling_data', $data, $where_call);
-			if($calling_update){
-				$flag = 1; 
-				$msg = "<span style='color:green;'>Response Has been Updated Successfully". "</span>";
-			}
+		$data = array(
+			'call_date' => date('Y-m-d', strtotime($_POST['edit_call_date'])),
+			'call_time' => $_POST['edit_call_time'],
+			'mode' => $_POST['edit_mode_id'],
+			'call_action' => $_POST['edit_call_action'],
+			'response_id' => $_POST['edit_response_id'],
+			'correct_email' => $_POST['edit_correct_email'],
+			'correct_mobile' => $_POST['edit_correct_mobile'],
+			'notes' => $_POST['edit_notes'],
+			'tag' => implode(',', $_POST['edit_tags'])
+		);
 
-		
-		if($flag==1){
-			$array = array('status' => 1, 'msg' => $msg );
-			echo json_encode($array);
-		}else{
-			$array = array('status' => 0, 'msg' => $msg );
-			echo json_encode($array);
+
+		if (isset($_POST['edit_status']) ? $_POST['edit_status'] : "" == 1) {
+
+			$update = array('status' => 1);
+			$where = "user_id = " . $_POST['edit_user_id'] . " AND assign_id = " . $_POST['edit_assign_id'];
+			$update = $this->db_lib->update('assignment', $update, $where);
 		}
 
-		
+		$where_call = "id = " . $_POST['edit_calling_id'];
+		$calling_update = $this->db_lib->update('calling_data', $data, $where_call);
+		if ($calling_update) {
+			$flag = 1;
+			$msg = "<span style='color:green;'>Response Has been Updated Successfully" . "</span>";
+		}
+
+
+		if ($flag == 1) {
+			$array = array('status' => 1, 'msg' => $msg);
+			echo json_encode($array);
+		} else {
+			$array = array('status' => 0, 'msg' => $msg);
+			echo json_encode($array);
+		}
 	}
 
 
@@ -1053,6 +1053,7 @@ class Communication extends CI_Controller
 		$data = [];
 		$n = 0;
 		$comp = 0;
+		$last_communicate = "";
 		foreach ($query->result() as $r) {
 
 			$campaign_id = $r->campaign_id;
@@ -1213,8 +1214,39 @@ class Communication extends CI_Controller
 
 			$academic_information = '<b>Course: </b>' . $course . '<br/><b>Study Center: </b>' . $study_center1 . '<br/><b>Category: </b>' . $category . '<br/><b>State: </b>' . $parma_state . '<br/><b>City: </b>' . $parma_city . '<br/><b>Enroll DateTime: </b>' . date("d-M-Y", strtotime($r->created_date));
 
+			$last_communication = $this->db->query("SELECT cd.*, admin.admin_name as tname, mode.name as mname, campaign.name as cname, responses.name as rname FROM calling_data cd INNER JOIN admin ON admin.admin_id = cd.team_id INNER JOIN mode ON mode.id = cd.mode INNER JOIN campaign ON campaign.id = cd.campaign_id 
+			INNER JOIN responses ON responses.id = cd.response_id WHERE cd.user_id = '" . $r->user_id . "' ORDER BY cd.call_date DESC LIMIT 1 ")->row();
 
-			$communication = $this->db->query("SELECT cd.*,admin.admin_name as tname,mode.name as mname, campaign.name as cname,responses.name as rname from calling_data cd inner join admin on admin.admin_id = cd.team_id inner join mode on mode.id = cd.mode inner join campaign on campaign.id = cd.campaign_id inner join responses on responses.id = cd.response_id where cd.user_id='" . $r->user_id . "' and cd.assign_id='" . $r->assign_id . "'  order by call_date asc")->result_array();
+
+			$communication = $this->db->query("SELECT cd.*,admin.admin_name as tname,mode.name as mname, campaign.name as cname,responses.name as rname from calling_data cd inner join admin on admin.admin_id = cd.team_id inner join mode on mode.id = cd.mode inner join campaign on campaign.id = cd.campaign_id inner join responses on responses.id = cd.response_id where cd.user_id='" . $r->user_id . "'  order by call_date asc")->result_array();
+
+
+			if ($last_communication) {
+				$last_tags = "";
+				if (!empty($last_communication->tag)) {
+					$tag_array = explode(',', $last_communication->tag);
+					foreach ($tag_array as $tag) {
+						$tag_query = $this->db->query("SELECT * FROM tags WHERE tag_id = $tag")->row();
+						if ($tag_query) {
+							$last_tags .= "<span class='badge badge-primary'>" . $tag_query->name . "</span> &nbsp;";
+						}
+					}
+				}
+
+				$last_communicate = '<div class="tracking-item"> 
+				
+				<div class="tracking-item"><div class="tracking-date"><b>DateTime: </b>' . date('M d, Y', strtotime($last_communication->call_date)) . '<span> ' . date('h:i A', strtotime($last_communication->call_time)) . '</span>
+					<div class="tracking-content">
+						<b>Campaign: </b><span style="color:red; font-size:18px; padding-bottom:10px;">' . $last_communication->cname . '</span><br/>
+						<b>Calling Team: </b>' . $last_communication->tname . '<br/>
+						<b>Communication Mode: </b>' . $last_communication->mname . '<br/>
+						<b>Call Action: </b>' . $last_communication->call_action . '<br/>
+						<b>Call Response: </b>' . $last_communication->rname . '<br/>
+						<b>Remark: </b>' . $last_communication->notes . '<br/>
+						<b>Tags: </b>' . $last_tags . '
+            		</div>
+        		</div>';
+			}
 
 
 			$communicate = "";
@@ -1245,6 +1277,7 @@ class Communication extends CI_Controller
 				$n . $btn,
 				$candidate_information,
 				$academic_information,
+				$last_communicate,
 				$communicate,
 
 			);
@@ -1287,6 +1320,7 @@ class Communication extends CI_Controller
 		$n = 0;
 		$comp = 0;
 		$course = "";
+		$last_communicate = "";
 		foreach ($query->result() as $r) {
 
 			$campaign_id = $r->campaign_id;
@@ -1447,9 +1481,37 @@ class Communication extends CI_Controller
 
 			$academic_information = '<b>Course: </b>' . $course . '<br/><b>Study Center: </b>' . $study_center1 . '<br/><b>Category: </b>' . $category . '<br/><b>State: </b>' . $parma_state . '<br/><b>City: </b>' . $parma_city . '<br/><b>Enroll DateTime: </b>' . date("d-M-Y", strtotime($r->created_date));
 
+			$last_communication = $this->db->query("SELECT cd.*, admin.admin_name as tname, mode.name as mname, campaign.name as cname, responses.name as rname FROM calling_data cd INNER JOIN admin ON admin.admin_id = cd.team_id INNER JOIN mode ON mode.id = cd.mode INNER JOIN campaign ON campaign.id = cd.campaign_id 
+			INNER JOIN responses ON responses.id = cd.response_id WHERE cd.user_id = '" . $r->user_id . "' AND cd.assign_id = '" . $r->assign_id . "' ORDER BY cd.call_date DESC LIMIT 1 ")->row();
 
-			$communication = $this->db->query("SELECT cd.*,admin.admin_name as tname,mode.name as mname, campaign.name as cname,responses.name as rname from calling_data cd inner join admin on admin.admin_id = cd.team_id inner join mode on mode.id = cd.mode inner join campaign on campaign.id = cd.campaign_id inner join responses on responses.id = cd.response_id where cd.user_id='" . $r->user_id . "' and cd.assign_id='" . $r->assign_id . "'  order by call_date asc")->result_array();
+			$communication = $this->db->query("SELECT cd.*,admin.admin_name as tname,mode.name as mname, campaign.name as cname,responses.name as rname from calling_data cd inner join admin on admin.admin_id = cd.team_id inner join mode on mode.id = cd.mode inner join campaign on campaign.id = cd.campaign_id inner join responses on responses.id = cd.response_id where cd.user_id='" . $r->user_id . "' order by call_date asc")->result_array();
 
+			if ($last_communication) {
+				$last_tags = "";
+				if (!empty($last_communication->tag)) {
+					$tag_array = explode(',', $last_communication->tag);
+					foreach ($tag_array as $tag) {
+						$tag_query = $this->db->query("SELECT * FROM tags WHERE tag_id = $tag")->row();
+						if ($tag_query) {
+							$last_tags .= "<span class='badge badge-primary'>" . $tag_query->name . "</span> &nbsp;";
+						}
+					}
+				}
+
+				$last_communicate = '<div class="tracking-item"> 
+				
+				<div class="tracking-item"><div class="tracking-date"><b>DateTime: </b>' . date('M d, Y', strtotime($last_communication->call_date)) . '<span> ' . date('h:i A', strtotime($last_communication->call_time)) . '</span>
+					<div class="tracking-content">
+						<b>Campaign: </b><span style="color:red; font-size:18px; padding-bottom:10px;">' . $last_communication->cname . '</span><br/>
+						<b>Calling Team: </b>' . $last_communication->tname . '<br/>
+						<b>Communication Mode: </b>' . $last_communication->mname . '<br/>
+						<b>Call Action: </b>' . $last_communication->call_action . '<br/>
+						<b>Call Response: </b>' . $last_communication->rname . '<br/>
+						<b>Remark: </b>' . $last_communication->notes . '<br/>
+						<b>Tags: </b>' . $last_tags . '
+            		</div>
+        		</div>';
+			}
 
 			$communicate = "";
 			foreach ($communication as $key => $comm) {
@@ -1479,8 +1541,8 @@ class Communication extends CI_Controller
 				$n . $btn,
 				$candidate_information,
 				$academic_information,
+				$last_communicate,
 				$communicate,
-
 			);
 		}
 
@@ -3040,69 +3102,87 @@ class Communication extends CI_Controller
 		exit();
 	}
 
-	
 
-	public function general_report(){
+
+	public function general_report()
+	{
 		$responses = $this->db->select('*')->from('responses')->get()->result();
 		$tags = $this->db->select('*')->from('tags')->get()->result();
-		$this->load->view($this->folder . "general_report", array('tags'=>$tags, 'responses' => $responses));
+		$this->load->view($this->folder . "general_report", array('tags' => $tags, 'responses' => $responses));
 	}
 
 
 	public function general_report_search()
 	{
 
-	
-	  $draw = intval($this->input->get("draw"));
-      $start = intval(1);
-      $length = intval(5);
 
-	  $whr = $this->input->post('data');
-		
-	  //$query = $this->db->query("SELECT um.*,ca.post_date FROM candidate_data ca 
-	  // INNER JOIN user_master um ON um.user_id=ca.mobile_verified_id 
-	  // INNER JOIN calling_data cd ON cd.user_id = um.user_id $whr AND ca.duplicate = 0 AND ca.admission=0 AND um.login_status = 2");
+		$draw = intval($this->input->get("draw"));
+		$start = intval(1);
+		$length = intval(5);
 
-	  $query = $this->db->query("SELECT um.*,ca.post_date FROM candidate_data ca 
+		$whr = $this->input->post('data');
+
+		//$query = $this->db->query("SELECT um.*,ca.post_date FROM candidate_data ca 
+		// INNER JOIN user_master um ON um.user_id=ca.mobile_verified_id 
+		// INNER JOIN calling_data cd ON cd.user_id = um.user_id $whr AND ca.duplicate = 0 AND ca.admission=0 AND um.login_status = 2");
+
+		$query = $this->db->query("SELECT um.*,ca.post_date FROM candidate_data ca 
 		INNER JOIN user_master um ON um.user_id=ca.mobile_verified_id 
 		INNER JOIN calling_data cd ON cd.user_id = um.user_id
 		INNER JOIN candidate_exam ce ON ce.user_id = um.user_id
 		INNER JOIN candidate_result cr ON cr.link_id = ce.id
 		INNER JOIN exam_master em ON em.id = ce.exam_id
 		$whr AND ca.duplicate = 0 AND ca.admission=0 AND um.login_status = 2 AND ce.exam_status='pass' AND em.exam_type='gdpi'");
-			
-
-      $data = [];
-      $n = 0;
-      foreach($query->result() as $r) {
 
 
+		$data = [];
+		$n = 0;
+		foreach ($query->result() as $r) {
 
 
-      		    $candidate_data = $this->db->select("*")->from("candidate_data")->where("mobile_verified_id = ".$r->user_id." AND duplicate = 0")->get()->row(); 
-		  
-		  		$score_date = $this->db->select("*")->from("candidate_score_mba")->where("candidate_id = ".$r->user_id)->get()->row(); 
 
-      			$fullname =""; $corre_state=""; $corre_city="";
-      			$email ="";  $parma_city=""; $parma_state="";
-      			$gender=""; $category=""; $dob="";
-      			$university=""; $appr_center_1=""; $gdpi_center_1=""; $study_center1="";
 
-      		if($candidate_data !=""){
+			$candidate_data = $this->db->select("*")->from("candidate_data")->where("mobile_verified_id = " . $r->user_id . " AND duplicate = 0")->get()->row();
 
-      			$parma_state_data = $this->db->select("*")->from("states")->where("id = ".$candidate_data->parma_state."")->get()->row();
-      			$parma_city_data = $this->db->select("*")->from("cities")->where("id = ".$candidate_data->parma_city."")->get()->row(); 
-	      		
+			$score_date = $this->db->select("*")->from("candidate_score_mba")->where("candidate_id = " . $r->user_id)->get()->row();
 
-	      		$corre_state_data = $this->db->select("*")->from("states")->where("id = ".$candidate_data->corre_state."")->get()->row();
-	      		$corre_city_data = $this->db->select("*")->from("cities")->where("id = ".$candidate_data->corre_city."")->get()->row(); 
-	      		
-				if($r->course_id==1){$course = "BBA";}
-				if($r->course_id==2){$course = "MBA";}
+			$fullname = "";
+			$corre_state = "";
+			$corre_city = "";
+			$email = "";
+			$parma_city = "";
+			$parma_state = "";
+			$gender = "";
+			$category = "";
+			$dob = "";
+			$university = "";
+			$appr_center_1 = "";
+			$gdpi_center_1 = "";
+			$study_center1 = "";
 
-      			if($r->course_id==1){$fullname = "<a href='../journey/show_journey/$r->user_id' target='_blank'>".$candidate_data->first_name." ".$candidate_data->middle_name." ".$candidate_data->last_name."</a>";}
-			
-				if($r->course_id==2){$fullname = "<a href='../journey/show_journey/$r->user_id' target='_blank'>".$candidate_data->first_name." ".$candidate_data->middle_name." ".$candidate_data->last_name."</a>";}
+			if ($candidate_data != "") {
+
+				$parma_state_data = $this->db->select("*")->from("states")->where("id = " . $candidate_data->parma_state . "")->get()->row();
+				$parma_city_data = $this->db->select("*")->from("cities")->where("id = " . $candidate_data->parma_city . "")->get()->row();
+
+
+				$corre_state_data = $this->db->select("*")->from("states")->where("id = " . $candidate_data->corre_state . "")->get()->row();
+				$corre_city_data = $this->db->select("*")->from("cities")->where("id = " . $candidate_data->corre_city . "")->get()->row();
+
+				if ($r->course_id == 1) {
+					$course = "BBA";
+				}
+				if ($r->course_id == 2) {
+					$course = "MBA";
+				}
+
+				if ($r->course_id == 1) {
+					$fullname = "<a href='../journey/show_journey/$r->user_id' target='_blank'>" . $candidate_data->first_name . " " . $candidate_data->middle_name . " " . $candidate_data->last_name . "</a>";
+				}
+
+				if ($r->course_id == 2) {
+					$fullname = "<a href='../journey/show_journey/$r->user_id' target='_blank'>" . $candidate_data->first_name . " " . $candidate_data->middle_name . " " . $candidate_data->last_name . "</a>";
+				}
 
 				$email = $candidate_data->email_id;
 				$gender = $candidate_data->gender;
@@ -3121,97 +3201,104 @@ class Communication extends CI_Controller
 				$study_center4 = $candidate_data->study_centre_4;
 				$category = $candidate_data->category;
 				$dob = $candidate_data->dob;
-				
+
 				$parma_state = $parma_state_data->name;
 				$parma_city = $parma_city_data->name;
 				$corre_state = $corre_state_data->name;
-				$corre_city = $corre_city_data->name??'';
-				
+				$corre_city = $corre_city_data->name ?? '';
+
 				$college = $candidate_data->academic_intermediate;
 				$academic_year = $candidate_data->academic_year;
-				$academic_mark_obt =$candidate_data->academic_mark_obt;
-				$academic_mark_max =$candidate_data->academic_mark_max;
-				$academic_percentage =$candidate_data->academic_percentage;
-				$obt = $academic_mark_obt.'/'.$academic_mark_max;
-				$parma_address = $candidate_data->parma_appertment." ".$candidate_data->parma_colony." ".$candidate_data->parma_area;
-				$corre_address = $candidate_data->corre_appertment." ".$candidate_data->corre_colony." ".$candidate_data->corre_area;
+				$academic_mark_obt = $candidate_data->academic_mark_obt;
+				$academic_mark_max = $candidate_data->academic_mark_max;
+				$academic_percentage = $candidate_data->academic_percentage;
+				$obt = $academic_mark_obt . '/' . $academic_mark_max;
+				$parma_address = $candidate_data->parma_appertment . " " . $candidate_data->parma_colony . " " . $candidate_data->parma_area;
+				$corre_address = $candidate_data->corre_appertment . " " . $candidate_data->corre_colony . " " . $candidate_data->corre_area;
 
 
-			$exam_status = $this->db->select("*")->from("candidate_exam")->where("user_id = ".$r->user_id."")->get()->row();
+				$exam_status = $this->db->select("*")->from("candidate_exam")->where("user_id = " . $r->user_id . "")->get()->row();
 
-			$this->db->select('*');    
-			$this->db->from('candidate_exam CE');
-			$this->db->join('exam_master em', 'em.id = CE.exam_id');
-			$this->db->where('CE.user_id', $r->user_id);
-			$exam = $this->db->get()->result();
-			$examName = "<ul>";
-			foreach ($exam as $key => $exams) {
-				$examName .=  '<li>'.$exams->exam_name.'</li>';
+				$this->db->select('*');
+				$this->db->from('candidate_exam CE');
+				$this->db->join('exam_master em', 'em.id = CE.exam_id');
+				$this->db->where('CE.user_id', $r->user_id);
+				$exam = $this->db->get()->result();
+				$examName = "<ul>";
+				foreach ($exam as $key => $exams) {
+					$examName .=  '<li>' . $exams->exam_name . '</li>';
+				}
+				$examName .= '</ul>';
 			}
-			$examName .='</ul>';
 
 
-      		}
-      		
+			$n++;
+			$amount = ($r->amount) / 100;
+			$tranid = $r->razorpay_trans_id;
 
-      		$n++;
-      		$amount = ($r->amount)/100;
-      		$tranid = $r->razorpay_trans_id;
+			if ($r->login_status == 1) {
+				$sts_btn = "<span class='btn btn-xs btn-danger'> Mobile Verified</span>";
+			}
 
-			if($r->login_status==1){$sts_btn = "<span class='btn btn-xs btn-danger'> Mobile Verified</span>";} 
+			if ($r->login_status == 2) {
+				$sts_btn = "<span class='btn btn-xs btn-success'> Paid</span>";
+			}
 
-			if($r->login_status==2){$sts_btn = "<span class='btn btn-xs btn-success'> Paid</span>";}
-			
 			$admit_btn = "<a href='generate_admit_card/$r->user_id' target='_blank' class='btn btn-danger btn-xs'>Admit Card</a>";
 
-			$checked="";
-			if($exam_status->id??0 !=''){$checked = 'checked = checked; disabled';}
-			
-		  	if($score_date){
-				$scoreA = "Name:". $score_date->score_name??'';
-				$scoreB = "<br/>Score: ". $score_date->score_marks??'';
-				$scoreC = "<br/>Year: ".  $score_date->score_year??'';
-		  	}else{$scoreA=""; $scoreB=""; $scoreC="";}
+			$checked = "";
+			if ($exam_status->id ?? 0 != '') {
+				$checked = 'checked = checked; disabled';
+			}
+
+			if ($score_date) {
+				$scoreA = "Name:" . $score_date->score_name ?? '';
+				$scoreB = "<br/>Score: " . $score_date->score_marks ?? '';
+				$scoreC = "<br/>Year: " .  $score_date->score_year ?? '';
+			} else {
+				$scoreA = "";
+				$scoreB = "";
+				$scoreC = "";
+			}
 
 
-			$call_count = $this->db->query("SELECT * FROM calling_data where user_id = '".$r->user_id."'")->num_rows();
-		  
-			
-           $data[] = array(
-				'0000'.$r->user_id??'',
+			$call_count = $this->db->query("SELECT * FROM calling_data where user_id = '" . $r->user_id . "'")->num_rows();
+
+
+			$data[] = array(
+				'0000' . $r->user_id ?? '',
 				$examName,
 				$course,
 				$study_center1,
-			    $scoreA.$scoreB.$scoreC,
-           		$fullname.'<br/> Total Calls- '.$call_count,
-                $r->user_mobile??'',
-			    $candidate_data->father_name??'',
-			    $candidate_data->mother_name??'',
-			    $dob,
-                $email,
-                $gender,
+				$scoreA . $scoreB . $scoreC,
+				$fullname . '<br/> Total Calls- ' . $call_count,
+				$r->user_mobile ?? '',
+				$candidate_data->father_name ?? '',
+				$candidate_data->mother_name ?? '',
+				$dob,
+				$email,
+				$gender,
 				$category,
-				$candidate_data->father_mobile??'',
-				$candidate_data->mather_mobile??'',
-				$candidate_data->religion??'',
-                $parma_state,
-                $parma_city,
+				$candidate_data->father_mobile ?? '',
+				$candidate_data->mather_mobile ?? '',
+				$candidate_data->religion ?? '',
+				$parma_state,
+				$parma_city,
 				date("d-M-Y", strtotime($r->created_date)),
-				date("d-M-Y", strtotime($candidate_data->post_date??''))
-           );
-      }
+				date("d-M-Y", strtotime($candidate_data->post_date ?? ''))
+			);
+		}
 
-	      $result = array(
-	               	 "draw" => $draw,
-	                 "recordsTotal" => $query->num_rows(),
-	                 "recordsFiltered" => $query->num_rows(),
-	                 "data" => $data
-	      );
+		$result = array(
+			"draw" => $draw,
+			"recordsTotal" => $query->num_rows(),
+			"recordsFiltered" => $query->num_rows(),
+			"data" => $data
+		);
 
 
-      echo json_encode($result);
-      exit();
-
+		echo json_encode($result);
+		exit();
 	}
 
 	public function update_assignment_status()
@@ -3229,7 +3316,7 @@ class Communication extends CI_Controller
 		echo json_encode(['status' => 'success']);
 	}
 
-	public function calling_data_display($id) 
+	public function calling_data_display($id)
 	{
 		$role = $this->session->userdata['role'];
 
@@ -3477,8 +3564,8 @@ class Communication extends CI_Controller
 						$tags .= "<span class='badge badge-primary'>" . $tag_query->name . "</span> &nbsp;";
 					}
 				}
-				$communicate .= 
-				'<div class="tracking-item"  style=" width: 250px;  border: 1px solid #ccc; padding: 10px; box-shadow: 2px 2px 8px rgba(0,0,0,0.1);"">
+				$communicate .=
+					'<div class="tracking-item"  style=" width: 250px;  border: 1px solid #ccc; padding: 10px; box-shadow: 2px 2px 8px rgba(0,0,0,0.1);"">
 					<div class="tracking-date"><b>DateTime: </b>' . date('M d, Y', strtotime($comm['call_date'])) . '<span> ' . date('h:i A', strtotime($comm['call_time'])) . '</span></div>
 					<div class="tracking-content">
                     <b>Campaign: </b><span style="color:red; font-size:18px; padding-bottom:10px;">' . $comm['cname'] . '</span><br/>
@@ -3489,7 +3576,7 @@ class Communication extends CI_Controller
                     <b>Remark: </b>' . $comm['notes'] . '<br/>
                     <b>Tags: </b>' . $tags . '
                     </div>
-				</div>';				
+				</div>';
 			}
 			$communicate .= "</div>";
 
@@ -3702,32 +3789,32 @@ class Communication extends CI_Controller
 
 	// 		$communication = $this->db->query("SELECT cd.*, admin.admin_name AS tname, mode.name AS mname, campaign.name AS cname, responses.name AS rname FROM calling_data cd INNER JOIN admin ON admin.admin_id = cd.team_id INNER JOIN mode ON mode.id = cd.mode INNER JOIN campaign ON campaign.id = cd.campaign_id INNER JOIN responses ON responses.id = cd.response_id WHERE cd.user_id = '" . $r->user_id . "' ORDER BY cd.call_date ASC ")->result_array();
 
-			// $communicate = "<div style='display: flex; flex-wrap: wrap; gap: 4px; width: 100%;'>";
+	// $communicate = "<div style='display: flex; flex-wrap: wrap; gap: 4px; width: 100%;'>";
 
-			// foreach ($communication as $key => $comm) {
-			// 	$tags = "";
-			// 	if ($comm['tag'] != '') {
-			// 		$tag_array = explode(',', $comm['tag']);
-			// 		foreach ($tag_array as $key => $tag) {
-			// 			$tag_query = $this->db->query("select * from tags where tag_id = $tag")->row();
-			// 			$tags .= "<span class='badge badge-primary'>" . $tag_query->name . "</span> &nbsp;";
-			// 		}
-			// 	}
-			// 	$communicate .= 
-			// 	'<div class="tracking-item"  style=" width: 250px;  border: 1px solid #ccc; padding: 10px; box-shadow: 2px 2px 8px rgba(0,0,0,0.1);"">
-			// 		<div class="tracking-date"><b>DateTime: </b>' . date('M d, Y', strtotime($comm['call_date'])) . '<span> ' . date('h:i A', strtotime($comm['call_time'])) . '</span></div>
-			// 		<div class="tracking-content">
-            //         <b>Campaign: </b><span style="color:red; font-size:18px; padding-bottom:10px;">' . $comm['cname'] . '</span><br/>
-            //         <b>Calling Team: </b>' . $comm['tname'] . '<br/>
-            //         <b>Communication Mode: </b>' . $comm['mname'] . '<br/>
-            //         <b>Call Action: </b>' . $comm['call_action'] . '<br/>
-            //         <b>Call Response: </b>' . $comm['rname'] . '<br/>
-            //         <b>Remark: </b>' . $comm['notes'] . '<br/>
-            //         <b>Tags: </b>' . $tags . '
-            //         </div>
-			// 	</div>';				
-			// }
-			// $communicate .= "</div>";
+	// foreach ($communication as $key => $comm) {
+	// 	$tags = "";
+	// 	if ($comm['tag'] != '') {
+	// 		$tag_array = explode(',', $comm['tag']);
+	// 		foreach ($tag_array as $key => $tag) {
+	// 			$tag_query = $this->db->query("select * from tags where tag_id = $tag")->row();
+	// 			$tags .= "<span class='badge badge-primary'>" . $tag_query->name . "</span> &nbsp;";
+	// 		}
+	// 	}
+	// 	$communicate .= 
+	// 	'<div class="tracking-item"  style=" width: 250px;  border: 1px solid #ccc; padding: 10px; box-shadow: 2px 2px 8px rgba(0,0,0,0.1);"">
+	// 		<div class="tracking-date"><b>DateTime: </b>' . date('M d, Y', strtotime($comm['call_date'])) . '<span> ' . date('h:i A', strtotime($comm['call_time'])) . '</span></div>
+	// 		<div class="tracking-content">
+	//         <b>Campaign: </b><span style="color:red; font-size:18px; padding-bottom:10px;">' . $comm['cname'] . '</span><br/>
+	//         <b>Calling Team: </b>' . $comm['tname'] . '<br/>
+	//         <b>Communication Mode: </b>' . $comm['mname'] . '<br/>
+	//         <b>Call Action: </b>' . $comm['call_action'] . '<br/>
+	//         <b>Call Response: </b>' . $comm['rname'] . '<br/>
+	//         <b>Remark: </b>' . $comm['notes'] . '<br/>
+	//         <b>Tags: </b>' . $tags . '
+	//         </div>
+	// 	</div>';				
+	// }
+	// $communicate .= "</div>";
 
 	// 		$data[] = array(
 	// 			$n . $btn,
@@ -3752,5 +3839,4 @@ class Communication extends CI_Controller
 	// }
 
 
-}	
-
+}

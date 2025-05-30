@@ -143,6 +143,7 @@
                                             <?php } ?>
                                             <th class="tbl-header">Candidate Information</th>
                                             <th style='width:30%;'>Academic Information</th>
+                                            <th style='width:30%;'>Last Communication</th>
                                             <th style='width:40%;'>Communication</th>
                                         </tr>
                                     </thead>
