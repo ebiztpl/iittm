@@ -66,6 +66,11 @@
                                         <th>Candidate</th>
                                         <th>Start Date</th>
                                         <th>End Date</th>
+                                        <th>
+                                            <?php if ($this->session->userdata('role') === 'admin'): ?>
+                                                Status Remark
+                                            <?php endif; ?>
+                                        </th>
                                         <th>Created At</th>
                                         <th>Action</th>
                                     </tr>
@@ -82,16 +87,36 @@
                                             <td><?= $assignments->assignment_name ?></td>
                                             <td><a data-id='<?= $assignments->cid ?>' style="cursor: pointer;" class="campaign_modal_btn"><?= $assignments->cname ?></a></td>
                                             <td><?= $assignments->team ?></td>
-                                            <td><?= $count; ?></td>
+                                            <td>
+                                                <a href="<?= site_url('communication/calling_data_display/' . $assignments->id); ?>">
+                                                    <?= $count; ?>
+                                                </a>
+                                            </td>
                                             <td><?php if ($assignments->assignment_start != '0000-00-00') {
                                                     echo date('d-m-Y', strtotime($assignments->assignment_start));
                                                 } ?></td>
                                             <td><?php if ($assignments->assignment_end != '0000-00-00') {
                                                     echo date('d-m-Y', strtotime($assignments->assignment_end));
                                                 } ?></td>
-                                            <td><?= $assignments->created_at ?></td>
                                             <td>
-                                                <a href="<?= site_url('communication/assignment_details/') . $assignments->id ?>" class="btn btn-primary btn_click">View</a>
+                                                <?php if ($this->session->userdata('role') === 'admin'): ?>
+                                                    <?= $assignments->report_remark ?>
+                                                <?php endif; ?>
+                                            </td>
+
+                                            <td><?= $assignments->created_at ?></td>
+                                            <td style="white-space: nowrap;">
+                                                <a href="<?= site_url('communication/assignment_details/') . $assignments->id ?>" class="btn btn-sm btn-primary btn_click mr-1">View</a>
+
+                                                <?php if ($this->session->userdata('role') === 'admin'): ?>
+                                                    <button
+                                                        type="button"
+                                                        class="btn btn-sm status-btn <?= ($assignments->report_status === 'closed' ? 'btn-danger' : 'btn-success') ?>"
+                                                        data-id="<?= $assignments->id ?>"
+                                                        data-status="<?= $assignments->report_status ?>">
+                                                        <?= ($assignments->report_status === 'closed' ? 'Closed' : 'In Progress') ?>
+                                                    </button>
+                                                <?php endif; ?>
                                             </td>
                                         </tr>
                                     <?php } ?>
@@ -103,8 +128,43 @@
             </section>
         </div>
 
+        <!-- status modal -->
+        <div class="modal fade" id="statusModal" tabindex="-1" role="dialog" aria-labelledby="statusModalLabel" aria-hidden="true" style="z-index: 999999;">
+            <div class="modal-dialog modal-dialog-centered modal-sm" role="document" style="margin-top: 15%;">
+                <form id="statusForm">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Update Assignment Status</h5>
+                            <button type="button" class="close" data-dismiss="modal">&times;</button>
+                        </div>
+                        <div class="modal-body">
+                            <input type="hidden" id="assignment_id" name="assignment_id">
 
+                            <div class="form-group">
+                                <label>Status</label>
+                                <select name="report_status" class="form-control" required>
+                                    <option value="">Select Status</option>
+                                    <option value="in_progress">In Progress</option>
+                                    <option value="closed">Closed</option>
+                                </select>
+                            </div>
 
+                            <div class="form-group">
+                                <label>Remark</label>
+                                <textarea name="report_remark" class="form-control" rows="3" required></textarea>
+                            </div>
+                        </div>
+
+                        <div class="modal-footer">
+                            <button type="submit" class="btn btn-primary">Update</button>
+
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- campaign modal -->
         <div class="modal fade" id="campaign_modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true" style="z-index: 999999;">
             <div class="modal-dialog modal-dialog-centered modal-sm" role="document" style="margin-top: 15%;">
                 <div class="modal-content">
@@ -188,6 +248,55 @@
         });
 
         $("#campaign_modal").modal('show');
+    });
+
+
+    let activeButton = null;
+
+    $(document).on('click', '.status-btn', function() {
+        activeButton = $(this);
+        const id = activeButton.data('id');
+        const current = activeButton.data('status') || 'in_progress';
+
+        if (current === 'closed') {
+            return;
+        }
+
+        $('#assignment_id').val(id);
+        $('#statusForm')[0].reset();
+        $('select[name="report_status"]').val(current);
+        $('#statusModal').modal('show');
+    });
+
+    $('#statusForm').submit(function(e) {
+        e.preventDefault();
+
+        $.ajax({
+            url: '<?= site_url("communication/update_assignment_status") ?>',
+            method: 'POST',
+            data: $(this).serialize(),
+            success: function() {
+                $('#statusModal').modal('hide');
+
+                const newStatus = $('select[name="report_status"]').val();
+                if (newStatus === 'closed') {
+                    activeButton
+                        .removeClass('btn-success')
+                        .addClass('btn-danger')
+                        .text('Closed')
+                        .data('status', 'closed');
+                } else {
+                    activeButton
+                        .removeClass('btn-danger')
+                        .addClass('btn-success')
+                        .text('In Progress...')
+                        .data('status', 'in_progress');
+                }
+            },
+            error: function() {
+                alert('Failed to update status.');
+            }
+        });
     });
 </script>
 
