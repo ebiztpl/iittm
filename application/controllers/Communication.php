@@ -1031,7 +1031,6 @@ class Communication extends CI_Controller
 			'responses' => $responses,
 			'tags' => $tags,
 			'user' => $user,
-			'tags' => $tags
 		));
 	}
 
@@ -1044,7 +1043,7 @@ class Communication extends CI_Controller
 		$id = $this->input->post('id');
 
 
-		$query = $this->db->query("SELECT um.*,aa.created_at,aa.assign_id,aa.campaign_id FROM assignment aa INNER JOIN assignment_master am ON am.id = aa.assignment_id INNER JOIN user_master um ON um.user_id=aa.user_id WHERE am.id = $id");
+		$query = $this->db->query("SELECT DISTINCT um.*,aa.created_at,aa.assign_id,aa.campaign_id FROM assignment aa INNER JOIN assignment_master am ON am.id = aa.assignment_id INNER JOIN user_master um ON um.user_id=aa.user_id WHERE am.id = $id");
 
 
 
@@ -1311,7 +1310,7 @@ class Communication extends CI_Controller
 		$whr = $this->input->post('data');
 
 
-		$query = $this->db->query("SELECT um.*,aa.created_at,aa.assign_id,aa.campaign_id, cd.tag, cd.response_id FROM assignment aa INNER JOIN assignment_master am ON am.id = aa.assignment_id INNER JOIN user_master um ON um.user_id=aa.user_id LEFT JOIN calling_data cd ON cd.user_id = aa.user_id AND cd.assign_id = aa.assign_id $whr");
+		$query = $this->db->query("SELECT DISTINCT um.*,aa.created_at,aa.assign_id,aa.campaign_id, cd.tag, cd.response_id FROM assignment aa INNER JOIN assignment_master am ON am.id = aa.assignment_id INNER JOIN user_master um ON um.user_id=aa.user_id LEFT JOIN calling_data cd ON cd.user_id = aa.user_id AND cd.assign_id = aa.assign_id $whr");
 
 
 
@@ -3250,5 +3249,544 @@ class Communication extends CI_Controller
       exit();
 
 	}
+
+	public function update_assignment_status()
+	{
+		$assignment_id = $this->input->post('assignment_id');
+		$status = $this->input->post('report_status');
+		$remark = $this->input->post('report_remark');
+
+
+		$this->db->where('id', $assignment_id)->update('assignment_master', [
+			'report_status' => $status,
+			'report_remark' => $remark
+		]);
+
+		echo json_encode(['status' => 'success']);
+	}
+
+	public function calling_data_display($id) 
+	{
+		$role = $this->session->userdata['role'];
+
+		if ($role == 'admin') {
+			$assignment = $this->db->select('am.*, am.id as id, c.name as cname, c.id as cid, a.admin_name as team')
+				->from('assignment_master am')
+				->join('assignment aa', 'aa.assignment_id = am.id')
+				->join('campaign c', 'c.id = aa.campaign_id')
+				->join('admin a', 'a.admin_id = aa.team_id')
+				->where('am.id', $id)
+				->group_by('aa.assignment_id')
+				->order_by('aa.created_at', 'DESC')
+				->get()->result();
+		} else {
+			$assignment = $this->db->select('am.*, am.id as id, c.name as cname, c.id as cid, a.admin_name as team')
+				->from('assignment_master am')
+				->join('assignment aa', 'aa.assignment_id = am.id')
+				->join('campaign c', 'c.id = aa.campaign_id')
+				->join('admin a', 'a.admin_id = aa.team_id')
+				->where('am.id', $id)
+				->where('aa.team_id', $this->session->userdata['admin_id'])
+				->group_by('aa.assignment_id')
+				->order_by('aa.created_at', 'DESC')
+				->get()->result();
+		}
+
+		// Your requested line - fetch assignment_master data as array (for details)
+		$details = $this->db->where('id', $id)->get('assignment_master')->result_array();
+
+		$team = $this->db->select('*')->from('team')->get()->result();
+		$campaign = $this->db->select('*')->from('campaign')->get()->result();
+		$mode = $this->db->select('*')->from('mode')->get()->result();
+		$responses = $this->db
+			->select('r.id, r.name')
+			->from('responses r')
+			->join('assignment a', 'a.campaign_id = r.campaign_id')
+			->where('a.assignment_id', $id)
+			->group_by('r.id')
+			->get()
+			->result();
+		$tags = $this->db->select('*')->from('tags')->get()->result();
+		$user = $this->db->select('*')->from('admin')->where('role', 'telecaller')->get()->result();
+
+		$this->load->view($this->folder . "assignment_call_details", array(
+			'assignment' => $assignment,
+			'details' => $details,   // pass details to view
+			'team' => $team,
+			'campaign' => $campaign,
+			'mode' => $mode,
+			'responses' => $responses,
+			'tags' => $tags,
+			'user' => $user,
+		));
+	}
+
+
+	public function calling_assignment_candidates()
+	{
+
+		$draw = intval($this->input->get("draw"));
+		$start = $this->input->get("start");
+		$length = $this->input->get("length");
+		$id = $this->input->post('id');
+
+
+		$query = $this->db->query("SELECT DISTINCT um.*,aa.created_at,aa.assign_id,aa.campaign_id FROM assignment aa INNER JOIN assignment_master am ON am.id = aa.assignment_id INNER JOIN user_master um ON um.user_id=aa.user_id WHERE am.id = $id");
+
+
+
+
+
+
+		$data = [];
+		$n = 0;
+		$comp = 0;
+		foreach ($query->result() as $r) {
+
+			$campaign_id = $r->campaign_id;
+			$candidate_data = $this->db->select("*")->from("candidate_data")->where("mobile_verified_id = " . $r->user_id . " AND duplicate = 0")->get()->row();
+
+			$score_date = $this->db->select("*")->from("candidate_score_mba")->where("candidate_id = " . $r->user_id)->get()->row();
+
+			$fullname = "";
+			$corre_state = "";
+			$corre_city = "";
+			$email = "";
+			$parma_city = "";
+			$parma_state = "";
+			$gender = "";
+			$category = "";
+			$dob = "";
+			$university = "";
+			$appr_center_1 = "";
+			$gdpi_center_1 = "";
+			$study_center1 = "";
+
+			if ($candidate_data != "") {
+
+				$parma_state_data = $this->db->select("*")->from("states")->where("id = " . $candidate_data->parma_state . "")->get()->row();
+				$parma_city_data = $this->db->select("*")->from("cities")->where("id = " . $candidate_data->parma_city . "")->get()->row();
+
+
+				$corre_state_data = $this->db->select("*")->from("states")->where("id = " . $candidate_data->corre_state . "")->get()->row();
+				$corre_city_data = $this->db->select("*")->from("cities")->where("id = " . $candidate_data->corre_city . "")->get()->row();
+
+				if ($r->course_id == 1) {
+					$course = "BBA";
+				}
+				if ($r->course_id == 2) {
+					$course = "MBA";
+				}
+
+				if ($r->course_id == 1) {
+					$fullname = "<a href='../journey/show_journey/$r->user_id' target='_blank'>" . $candidate_data->first_name . " " . $candidate_data->middle_name . " " . $candidate_data->last_name . "</a>";
+				}
+
+				if ($r->course_id == 2) {
+					$fullname = "<a href='../journey/show_journey/$r->user_id' target='_blank'>" . $candidate_data->first_name . " " . $candidate_data->middle_name . " " . $candidate_data->last_name . "</a>";
+				}
+
+				$email = $candidate_data->email_id;
+				$gender = $candidate_data->gender;
+				$university = $candidate_data->academic_board;
+				$appr_center_1 = $candidate_data->appearing_center_1;
+				$appr_center_2 = $candidate_data->appearing_center_2;
+				$appr_center_3 = $candidate_data->appearing_center_3;
+				$appr_center_4 = $candidate_data->appearing_center_4;
+				$gdpi_center_1 = $candidate_data->gdpi_center_1;
+				$gdpi_center_2 = $candidate_data->gdpi_center_2;
+				$gdpi_center_3 = $candidate_data->gdpi_center_3;
+				$gdpi_center_4 = $candidate_data->gdpi_center_4;
+				$study_center1 = $candidate_data->study_centre_1;
+				$study_center2 = $candidate_data->study_centre_2;
+				$study_center3 = $candidate_data->study_centre_3;
+				$study_center4 = $candidate_data->study_centre_4;
+				$category = $candidate_data->category;
+				$dob = $candidate_data->dob;
+
+				$parma_state = $parma_state_data->name;
+				$parma_city = $parma_city_data->name;
+				$corre_state = $corre_state_data->name;
+				$corre_city = isset($corre_city_data->name) ? $corre_city_data->name : '';
+
+				$college = $candidate_data->academic_intermediate;
+				$academic_year = $candidate_data->academic_year;
+				$academic_mark_obt = $candidate_data->academic_mark_obt;
+				$academic_mark_max = $candidate_data->academic_mark_max;
+				$academic_percentage = $candidate_data->academic_percentage;
+				$obt = $academic_mark_obt . '/' . $academic_mark_max;
+				$parma_address = $candidate_data->parma_appertment . " " . $candidate_data->parma_colony . " " . $candidate_data->parma_area;
+				$corre_address = $candidate_data->corre_appertment . " " . $candidate_data->corre_colony . " " . $candidate_data->corre_area;
+
+
+				$exam_status = $this->db->select("*")->from("candidate_exam")->where("user_id = " . $r->user_id . "")->get()->row();
+
+				$this->db->select('*');
+				$this->db->from('candidate_exam CE');
+				$this->db->join('exam_master em', 'em.id = CE.exam_id');
+				$this->db->where('CE.user_id', $r->user_id);
+				$exam = $this->db->get()->result();
+				$examName = "<ul>";
+				foreach ($exam as $key => $exams) {
+					$examName .=  '<li>' . $exams->exam_name . '</li>';
+				}
+				$examName .= '</ul>';
+			}
+
+
+			$n++;
+			if ($r->amount) {
+				$amount = ($r->amount) / 100;
+			} else {
+				$amount = 0;
+			}
+			$tranid = $r->razorpay_trans_id;
+
+			if ($r->login_status == 1) {
+				$sts_btn = "<span class='btn btn-xs btn-danger'> Mobile Verified</span>";
+			}
+
+			if ($r->login_status == 2) {
+				$sts_btn = "<span class='btn btn-xs btn-success'> Paid</span>";
+			}
+
+			$admit_btn = "<a href='generate_admit_card/$r->user_id' target='_blank' class='btn btn-danger btn-xs'>Admit Card</a>";
+
+			$checked = "";
+			if ($exam_status->id ?? 0 != '') {
+				$checked = 'checked = "checked"; disabled';
+			}
+
+			if ($score_date) {
+				$scoreA = "Name:" . $score_date->score_name ?? '';
+				$scoreB = "<br/>Score: " . $score_date->score_marks ?? '';
+				$scoreC = "<br/>Year: " .  $score_date->score_year ?? '';
+			} else {
+				$scoreA = "";
+				$scoreB = "";
+				$scoreC = "";
+			}
+
+			// if ($this->session->userdata['role'] == 'telecaller') {
+
+			// 	$calling_check = $this->db->select("*")->from("calling_data")->where("assign_id = " . $r->assign_id . "")->get()->row();
+			// 	if ($calling_check) {
+			// 		$btn = "<b>Done</b>";
+			// 		$comp++;
+			// 	} else {
+			// 		$btn = '<input type="checkbox" value="' . $r->user_id . '" assign-id="' . $r->assign_id . '" data-id="' . $r->user_id . '" class="exam_status checkbox" name="user_id[]"/>';
+			// 	}
+			// } else {
+			// 	$calling_check = $this->db->select("*")->from("calling_data")->where("assign_id = " . $r->assign_id . "")->get()->row();
+			// 	if ($calling_check) {
+			// 		$btn = "";
+			// 		$comp++;
+			// 	} else {
+			// 		$btn = '';
+			// 	}
+			// }
+
+			if (isset($candidate_data->father_name)) {
+				$fname = $candidate_data->father_name;
+			} else {
+				$fname = "";
+			}
+			if (isset($candidate_data->mother_name)) {
+				$mname = $candidate_data->mother_name;
+			} else {
+				$mname = "";
+			}
+
+			$candidate_information = '<b>Enroll No.: </b> 0000' . $r->user_id . '<br/><b>Full Name: </b>' . $fullname . '<br/><b>Mobile :</b> ' . $r->user_mobile . '<br/><b>Father Name: </b>' . $fname . '<br/><b>Mother Name: </b>' . $mname . '<br/><b>DOB: </b>' . $dob . '<br/><b>Email: </b>' . $email . '<br/><b>Gender: </b>' . $gender;
+
+
+			$communication = $this->db->query("SELECT cd.*, admin.admin_name AS tname, mode.name AS mname, campaign.name AS cname, responses.name AS rname FROM calling_data cd INNER JOIN admin ON admin.admin_id = cd.team_id INNER JOIN mode ON mode.id = cd.mode INNER JOIN campaign ON campaign.id = cd.campaign_id INNER JOIN responses ON responses.id = cd.response_id WHERE cd.user_id = '" . $r->user_id . "' ORDER BY cd.call_date ASC ")->result_array();
+
+			$communicate = "<div style='display: flex; flex-wrap: wrap; gap: 4px; width: 100%;'>";
+
+			foreach ($communication as $key => $comm) {
+				$tags = "";
+				if ($comm['tag'] != '') {
+					$tag_array = explode(',', $comm['tag']);
+					foreach ($tag_array as $key => $tag) {
+						$tag_query = $this->db->query("select * from tags where tag_id = $tag")->row();
+						$tags .= "<span class='badge badge-primary'>" . $tag_query->name . "</span> &nbsp;";
+					}
+				}
+				$communicate .= 
+				'<div class="tracking-item"  style=" width: 250px;  border: 1px solid #ccc; padding: 10px; box-shadow: 2px 2px 8px rgba(0,0,0,0.1);"">
+					<div class="tracking-date"><b>DateTime: </b>' . date('M d, Y', strtotime($comm['call_date'])) . '<span> ' . date('h:i A', strtotime($comm['call_time'])) . '</span></div>
+					<div class="tracking-content">
+                    <b>Campaign: </b><span style="color:red; font-size:18px; padding-bottom:10px;">' . $comm['cname'] . '</span><br/>
+                    <b>Calling Team: </b>' . $comm['tname'] . '<br/>
+                    <b>Communication Mode: </b>' . $comm['mname'] . '<br/>
+                    <b>Call Action: </b>' . $comm['call_action'] . '<br/>
+                    <b>Call Response: </b>' . $comm['rname'] . '<br/>
+                    <b>Remark: </b>' . $comm['notes'] . '<br/>
+                    <b>Tags: </b>' . $tags . '
+                    </div>
+				</div>';				
+			}
+			$communicate .= "</div>";
+
+			$data[] = array(
+				// $n . $btn,
+				$n,
+				$candidate_information,
+				$communicate,
+
+			);
+		}
+
+		$result = array(
+			"draw" => $draw,
+			"recordsTotal" => $query->num_rows(),
+			"recordsFiltered" => $query->num_rows(),
+			"recordsComplete" => $comp,
+			"campaign_id" => $campaign_id,
+			"data" => $data,
+		);
+
+
+		echo json_encode($result);
+	}
+
+
+
+
+
+	// public function calling_assignment_candidates_filter()
+	// {
+
+	// 	$draw = intval($this->input->get("draw"));
+	// 	$start = $this->input->get("start");
+	// 	$length = $this->input->get("length");
+	// 	$whr = $this->input->post('data');
+
+
+	// 	$query = $this->db->query("SELECT DISTINCT um.*,aa.created_at,aa.assign_id,aa.campaign_id, cd.tag, cd.response_id FROM assignment aa INNER JOIN assignment_master am ON am.id = aa.assignment_id INNER JOIN user_master um ON um.user_id=aa.user_id LEFT JOIN calling_data cd ON cd.user_id = aa.user_id AND cd.assign_id = aa.assign_id $whr");
+
+
+
+
+
+
+	// 	$data = [];
+	// 	$n = 0;
+	// 	$comp = 0;
+	// 	$course = "";
+	// 	foreach ($query->result() as $r) {
+
+	// 		$campaign_id = $r->campaign_id;
+	// 		$candidate_data = $this->db->select("*")->from("candidate_data")->where("mobile_verified_id = " . $r->user_id . " AND duplicate = 0")->get()->row();
+
+	// 		$score_date = $this->db->select("*")->from("candidate_score_mba")->where("candidate_id = " . $r->user_id)->get()->row();
+
+	// 		$fullname = "";
+	// 		$corre_state = "";
+	// 		$corre_city = "";
+	// 		$email = "";
+	// 		$parma_city = "";
+	// 		$parma_state = "";
+	// 		$gender = "";
+	// 		$category = "";
+	// 		$dob = "";
+	// 		$university = "";
+	// 		$appr_center_1 = "";
+	// 		$gdpi_center_1 = "";
+	// 		$study_center1 = "";
+
+	// 		if ($candidate_data != "") {
+
+	// 			$parma_state_data = $this->db->select("*")->from("states")->where("id = " . $candidate_data->parma_state . "")->get()->row();
+	// 			$parma_city_data = $this->db->select("*")->from("cities")->where("id = " . $candidate_data->parma_city . "")->get()->row();
+
+
+	// 			$corre_state_data = $this->db->select("*")->from("states")->where("id = " . $candidate_data->corre_state . "")->get()->row();
+	// 			$corre_city_data = $this->db->select("*")->from("cities")->where("id = " . $candidate_data->corre_city . "")->get()->row();
+
+	// 			if ($r->course_id == 1) {
+	// 				$course = "BBA";
+	// 			}
+	// 			if ($r->course_id == 2) {
+	// 				$course = "MBA";
+	// 			}
+
+	// 			if ($r->course_id == 1) {
+	// 				$fullname = "<a href='../journey/show_journey/$r->user_id' target='_blank'>" . $candidate_data->first_name . " " . $candidate_data->middle_name . " " . $candidate_data->last_name . "</a>";
+	// 			}
+
+	// 			if ($r->course_id == 2) {
+	// 				$fullname = "<a href='../journey/show_journey/$r->user_id' target='_blank'>" . $candidate_data->first_name . " " . $candidate_data->middle_name . " " . $candidate_data->last_name . "</a>";
+	// 			}
+
+	// 			$email = $candidate_data->email_id;
+	// 			$gender = $candidate_data->gender;
+	// 			$university = $candidate_data->academic_board;
+	// 			$appr_center_1 = $candidate_data->appearing_center_1;
+	// 			$appr_center_2 = $candidate_data->appearing_center_2;
+	// 			$appr_center_3 = $candidate_data->appearing_center_3;
+	// 			$appr_center_4 = $candidate_data->appearing_center_4;
+	// 			$gdpi_center_1 = $candidate_data->gdpi_center_1;
+	// 			$gdpi_center_2 = $candidate_data->gdpi_center_2;
+	// 			$gdpi_center_3 = $candidate_data->gdpi_center_3;
+	// 			$gdpi_center_4 = $candidate_data->gdpi_center_4;
+	// 			$study_center1 = $candidate_data->study_centre_1;
+	// 			$study_center2 = $candidate_data->study_centre_2;
+	// 			$study_center3 = $candidate_data->study_centre_3;
+	// 			$study_center4 = $candidate_data->study_centre_4;
+	// 			$category = $candidate_data->category;
+	// 			$dob = $candidate_data->dob;
+
+	// 			$parma_state = $parma_state_data->name;
+	// 			$parma_city = $parma_city_data->name;
+	// 			$corre_state = $corre_state_data->name;
+	// 			$corre_city = isset($corre_city_data->name) ? $corre_city_data->name : '';
+
+	// 			$college = $candidate_data->academic_intermediate;
+	// 			$academic_year = $candidate_data->academic_year;
+	// 			$academic_mark_obt = $candidate_data->academic_mark_obt;
+	// 			$academic_mark_max = $candidate_data->academic_mark_max;
+	// 			$academic_percentage = $candidate_data->academic_percentage;
+	// 			$obt = $academic_mark_obt . '/' . $academic_mark_max;
+	// 			$parma_address = $candidate_data->parma_appertment . " " . $candidate_data->parma_colony . " " . $candidate_data->parma_area;
+	// 			$corre_address = $candidate_data->corre_appertment . " " . $candidate_data->corre_colony . " " . $candidate_data->corre_area;
+
+
+	// 			$exam_status = $this->db->select("*")->from("candidate_exam")->where("user_id = " . $r->user_id . "")->get()->row();
+
+	// 			$this->db->select('*');
+	// 			$this->db->from('candidate_exam CE');
+	// 			$this->db->join('exam_master em', 'em.id = CE.exam_id');
+	// 			$this->db->where('CE.user_id', $r->user_id);
+	// 			$exam = $this->db->get()->result();
+	// 			$examName = "<ul>";
+	// 			foreach ($exam as $key => $exams) {
+	// 				$examName .=  '<li>' . $exams->exam_name . '</li>';
+	// 			}
+	// 			$examName .= '</ul>';
+	// 		}
+
+
+	// 		$n++;
+	// 		if ($r->amount) {
+	// 			$amount = ($r->amount) / 100;
+	// 		} else {
+	// 			$amount = 0;
+	// 		}
+	// 		$tranid = $r->razorpay_trans_id;
+
+	// 		if ($r->login_status == 1) {
+	// 			$sts_btn = "<span class='btn btn-xs btn-danger'> Mobile Verified</span>";
+	// 		}
+
+	// 		if ($r->login_status == 2) {
+	// 			$sts_btn = "<span class='btn btn-xs btn-success'> Paid</span>";
+	// 		}
+
+	// 		$admit_btn = "<a href='generate_admit_card/$r->user_id' target='_blank' class='btn btn-danger btn-xs'>Admit Card</a>";
+
+	// 		$checked = "";
+	// 		if ($exam_status->id ?? 0 != '') {
+	// 			$checked = 'checked = "checked"; disabled';
+	// 		}
+
+	// 		if ($score_date) {
+	// 			$scoreA = "Name:" . $score_date->score_name ?? '';
+	// 			$scoreB = "<br/>Score: " . $score_date->score_marks ?? '';
+	// 			$scoreC = "<br/>Year: " .  $score_date->score_year ?? '';
+	// 		} else {
+	// 			$scoreA = "";
+	// 			$scoreB = "";
+	// 			$scoreC = "";
+	// 		}
+
+	// 		if ($this->session->userdata['role'] == 'telecaller') {
+
+	// 			$calling_check = $this->db->select("*")->from("calling_data")->where("assign_id = " . $r->assign_id . "")->get()->row();
+	// 			if ($calling_check) {
+	// 				$btn = "<b>Done</b>";
+	// 				$comp++;
+	// 			} else {
+	// 				$btn = '<input type="checkbox" value="' . $r->user_id . '" assign-id="' . $r->assign_id . '" data-id="' . $r->user_id . '" class="exam_status checkbox" name="user_id[]"/>';
+	// 			}
+	// 		} else {
+	// 			$calling_check = $this->db->select("*")->from("calling_data")->where("assign_id = " . $r->assign_id . "")->get()->row();
+	// 			if ($calling_check) {
+	// 				$btn = "";
+	// 				$comp++;
+	// 			} else {
+	// 				$btn = '';
+	// 			}
+	// 		}
+
+	// 		if (isset($candidate_data->father_name)) {
+	// 			$fname = $candidate_data->father_name;
+	// 		} else {
+	// 			$fname = "";
+	// 		}
+	// 		if (isset($candidate_data->mother_name)) {
+	// 			$mname = $candidate_data->mother_name;
+	// 		} else {
+	// 			$mname = "";
+	// 		}
+
+	// 		$candidate_information = '<b>Enroll No.: </b> 0000' . $r->user_id . '<br/><b>Full Name: </b>' . $fullname . '<br/><b>Mobile :</b> ' . $r->user_mobile . '<br/><b>Father Name: </b>' . $fname . '<br/><b>Mother Name: </b>' . $mname . '<br/><b>DOB: </b>' . $dob . '<br/><b>Email: </b>' . $email . '<br/><b>Gender: </b>' . $gender;
+
+	// 		$academic_information = '<b>Course: </b>' . $course . '<br/><b>Study Center: </b>' . $study_center1 . '<br/><b>Category: </b>' . $category . '<br/><b>State: </b>' . $parma_state . '<br/><b>City: </b>' . $parma_city . '<br/><b>Enroll DateTime: </b>' . date("d-M-Y", strtotime($r->created_date));
+
+
+	// 		$communication = $this->db->query("SELECT cd.*, admin.admin_name AS tname, mode.name AS mname, campaign.name AS cname, responses.name AS rname FROM calling_data cd INNER JOIN admin ON admin.admin_id = cd.team_id INNER JOIN mode ON mode.id = cd.mode INNER JOIN campaign ON campaign.id = cd.campaign_id INNER JOIN responses ON responses.id = cd.response_id WHERE cd.user_id = '" . $r->user_id . "' ORDER BY cd.call_date ASC ")->result_array();
+
+			// $communicate = "<div style='display: flex; flex-wrap: wrap; gap: 4px; width: 100%;'>";
+
+			// foreach ($communication as $key => $comm) {
+			// 	$tags = "";
+			// 	if ($comm['tag'] != '') {
+			// 		$tag_array = explode(',', $comm['tag']);
+			// 		foreach ($tag_array as $key => $tag) {
+			// 			$tag_query = $this->db->query("select * from tags where tag_id = $tag")->row();
+			// 			$tags .= "<span class='badge badge-primary'>" . $tag_query->name . "</span> &nbsp;";
+			// 		}
+			// 	}
+			// 	$communicate .= 
+			// 	'<div class="tracking-item"  style=" width: 250px;  border: 1px solid #ccc; padding: 10px; box-shadow: 2px 2px 8px rgba(0,0,0,0.1);"">
+			// 		<div class="tracking-date"><b>DateTime: </b>' . date('M d, Y', strtotime($comm['call_date'])) . '<span> ' . date('h:i A', strtotime($comm['call_time'])) . '</span></div>
+			// 		<div class="tracking-content">
+            //         <b>Campaign: </b><span style="color:red; font-size:18px; padding-bottom:10px;">' . $comm['cname'] . '</span><br/>
+            //         <b>Calling Team: </b>' . $comm['tname'] . '<br/>
+            //         <b>Communication Mode: </b>' . $comm['mname'] . '<br/>
+            //         <b>Call Action: </b>' . $comm['call_action'] . '<br/>
+            //         <b>Call Response: </b>' . $comm['rname'] . '<br/>
+            //         <b>Remark: </b>' . $comm['notes'] . '<br/>
+            //         <b>Tags: </b>' . $tags . '
+            //         </div>
+			// 	</div>';				
+			// }
+			// $communicate .= "</div>";
+
+	// 		$data[] = array(
+	// 			$n . $btn,
+	// 			$candidate_information,
+	// 			$academic_information,
+	// 			$communicate,
+
+	// 		);
+	// 	}
+
+	// 	$result = array(
+	// 		"draw" => $draw,
+	// 		"recordsTotal" => $query->num_rows(),
+	// 		"recordsFiltered" => $query->num_rows(),
+	// 		"recordsComplete" => $comp,
+	// 		// "campaign_id" => $campaign_id,
+	// 		"data" => $data,
+	// 	);
+
+
+	// 	echo json_encode($result);
+	// }
+
+
 }	
 
