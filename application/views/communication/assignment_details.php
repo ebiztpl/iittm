@@ -78,8 +78,12 @@
                                 </div>
 
                                 <!-- Search Button -->
-                                <div class="col-sm-2">
+                                <div class="col-sm-1">
                                     <button type="button" id="filterBtn" class="btn btn-success">Search</button>
+                                </div>
+
+                                <div class="col-sm-1">
+                                    <button type="button" id="reset" class="btn btn-success">Reset</button>
                                 </div>
                             </div>
                         </div>
@@ -512,6 +516,9 @@
         });
     });
 
+    $('#reset').click(function() {
+        location.reload();
+    });
 
     $(document).ready(function() {
 

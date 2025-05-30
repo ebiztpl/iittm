@@ -66,7 +66,11 @@
                                         <th>Candidate</th>
                                         <th>Start Date</th>
                                         <th>End Date</th>
-                                        <th>Status Remark</th>
+                                        <th>
+                                            <?php if ($this->session->userdata('role') === 'admin'): ?>
+                                                Status Remark
+                                            <?php endif; ?>
+                                        </th>
                                         <th>Created At</th>
                                         <th>Action</th>
                                     </tr>
@@ -83,27 +87,36 @@
                                             <td><?= $assignments->assignment_name ?></td>
                                             <td><a data-id='<?= $assignments->cid ?>' style="cursor: pointer;" class="campaign_modal_btn"><?= $assignments->cname ?></a></td>
                                             <td><?= $assignments->team ?></td>
-                                            <td><?= $count; ?></td>
+                                            <td>
+                                                <a href="<?= site_url('communication/calling_data_display/' . $assignments->id); ?>">
+                                                    <?= $count; ?>
+                                                </a>
+                                            </td>
                                             <td><?php if ($assignments->assignment_start != '0000-00-00') {
                                                     echo date('d-m-Y', strtotime($assignments->assignment_start));
                                                 } ?></td>
                                             <td><?php if ($assignments->assignment_end != '0000-00-00') {
                                                     echo date('d-m-Y', strtotime($assignments->assignment_end));
                                                 } ?></td>
-                                            <td><?= $assignments->report_remark ?></td>
+                                            <td>
+                                                <?php if ($this->session->userdata('role') === 'admin'): ?>
+                                                    <?= $assignments->report_remark ?>
+                                                <?php endif; ?>
+                                            </td>
+
                                             <td><?= $assignments->created_at ?></td>
                                             <td style="white-space: nowrap;">
-                                                    <a href="<?= site_url('communication/assignment_details/') . $assignments->id ?>" class="btn btn-sm btn-primary btn_click mr-1">View</a>
+                                                <a href="<?= site_url('communication/assignment_details/') . $assignments->id ?>" class="btn btn-sm btn-primary btn_click mr-1">View</a>
 
-                                                    <?php if ($this->session->userdata('role') === 'admin'): ?>
-                                                        <button
-                                                            type="button"
-                                                            class="btn btn-sm status-btn <?= ($assignments->report_status === 'closed' ? 'btn-danger' : 'btn-success') ?>"
-                                                            data-id="<?= $assignments->id ?>"
-                                                            data-status="<?= $assignments->report_status ?>">
-                                                            <?= ($assignments->report_status === 'closed' ? 'Closed' : 'In Progress') ?>
-                                                        </button>
-                                                    <?php endif; ?>
+                                                <?php if ($this->session->userdata('role') === 'admin'): ?>
+                                                    <button
+                                                        type="button"
+                                                        class="btn btn-sm status-btn <?= ($assignments->report_status === 'closed' ? 'btn-danger' : 'btn-success') ?>"
+                                                        data-id="<?= $assignments->id ?>"
+                                                        data-status="<?= $assignments->report_status ?>">
+                                                        <?= ($assignments->report_status === 'closed' ? 'Closed' : 'In Progress') ?>
+                                                    </button>
+                                                <?php endif; ?>
                                             </td>
                                         </tr>
                                     <?php } ?>
