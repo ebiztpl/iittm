@@ -22,6 +22,10 @@
         }
     </style>
 
+
+    <!-- <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> -->
+
+
 </head>
 
 <body class="skin-blue sidebar-mini sidebar-collapse">
@@ -55,9 +59,43 @@
                 <div class="page-content">
                     <div class="box">
                         <div class="box-body">
-                            <!-- <span style="font-size: 20px; color: green; text-align: right; margin-left: 50px; float: right">Total Records - <span id="record">0</span></span> -->
+                            <input type="hidden" id="assignment_id" value="<?= $assignment_id ?>">
+                            <div class="row" id="filter-section">
+                                <div class="col-sm-2">
+                                    <select class="form-control" name="tag[]" id="tag_filter" multiple>
+                                        <?php foreach ($tags as $tag): ?>
+                                            <option value="<?= $tag->tag_id ?>"><?= $tag->name ?></option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
 
-                            <!-- <span style="font-size: 20px; color: green; text-align: right; display: block; ">Complete - <span id="complete">0</span></span> -->
+                                <!-- Response Dropdown -->
+                                <div class="form-group col-sm-2">
+                                    <select class="form-control" name="response_id[]" id="response_filter" multiple>
+                                        <?php foreach ($responses as $response): ?>
+                                            <option value="<?= $response->id ?>"><?= $response->name ?></option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
+
+                                <!-- Search Button -->
+                                <div class="col-sm-1">
+                                    <button type="button" id="filterBtn" class="btn btn-success">Search</button>
+                                </div>
+
+                                <div class="col-sm-1">
+                                    <button type="button" id="reset" class="btn btn-danger">Reset</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+
+                    <div class="box">
+                        <div class="box-body">
+                            <!-- <span style="font-size: 20px; color: green; text-align: right; margin-left: 50px; float: right">Complete - <span id="complete">0</span></span> -->
+
+                            <span style="font-size: 20px; color: green; text-align: right; display: block; ">Total Records - <span id="record">0</span></span>
 
                             <div style="overflow:scroll; height:500px;">
                                 <table id="item-list-filter" class="table table-bordered table-striped table-hover ">
@@ -90,7 +128,7 @@
 
         <?php $this->load->view('../layout/footer.php'); ?>
 
-
+        <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
         <script type="text/javascript" language="javascript" src="https://cdn.datatables.net/buttons/1.6.1/js/dataTables.buttons.min.js"></script>
         <script type="text/javascript" language="javascript" src="https://cdn.datatables.net/buttons/1.6.1/js/buttons.flash.min.js"></script>
         <script type="text/javascript" language="javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
@@ -102,6 +140,20 @@
 
 
         <script>
+            $(document).ready(function() {
+                $('#tag_filter').select2({
+                    placeholder: "Select Tags"
+                });
+
+                $('#response_filter').select2({
+                    placeholder: "Select Responses"
+                });
+            });
+
+            $('#reset').click(function() {
+                location.reload();
+            });
+
             $(document).ready(function() {
                 $("#loading").show();
 
@@ -120,8 +172,9 @@
                             d.from_date = fromDate;
                             d.to_date = toDate;
                         },
-                        complete: function() {
+                        complete: function(e) {
                             $("#loading").hide();
+                            // $("#complete").html(e.json.recordsComplete);
                         }
                     },
                     columns: [{
@@ -155,10 +208,65 @@
                         [25, 50, -1],
                         ['25 rows', '50 rows', 'Show all']
                     ],
-                    buttons: ['copy', 'csv', 'excel', 'pdf', 'print']
+                    buttons: ['copy', 'csv', 'excel', 'pdf', 'print'],
+                    "drawCallback": function(settings) {
+                        $("#loading").hide();
+                        var api = this.api();
+                        var info = api.page.info();
+                        $("#record").text(info.recordsDisplay);
+                    }
+                });
+
+
+                $("#filterBtn").on('click', function() {
+
+                    $("#loading").show();
+                    $('#item-list_wrapper').hide();
+                    $('#item-list-filter').show();
+
+                    $('#item-list-filter').DataTable({
+                        "ajax": {
+                            url: "<?php echo site_url('Myreport/report_details_display_filter'); ?>",
+                            data: function(d) {
+                                d.assignment_id = $("#assignment_id").val();
+                                d.response_id = responseId;
+                                d.from_date = fromDate;
+                                d.to_date = toDate;
+                                d.response_id_filter = $("#response_filter").val(); // array
+                                d.tag_ids = $("#tag_filter").val();
+                            },
+                            type: 'POST'
+                        },
+                        initComplete: function(e) {
+                            $("#loading").hide();
+                            // $("#complete").html(e.json.recordsComplete);
+                        },
+                        "bPaginate": true,
+                        "bLengthChange": false,
+                        "bFilter": false,
+                        "bSort": true,
+                        "order": [0, "asc"],
+                        "bInfo": true,
+                        "bAutoWidth": false,
+                        "searching": true,
+                        "bRetreive": true,
+                        "destroy": true,
+                        dom: 'Bfrtip',
+                        lengthMenu: [
+                            [25, 50, -1],
+                            ['25 rows', '50 rows', 'Show all']
+                        ],
+                        buttons: ['copy', 'csv', 'excel', 'pdf', 'print'],
+                        "drawCallback": function(settings) {
+                            var api = this.api();
+                            var info = api.page.info();
+                            $("#record").text(info.recordsDisplay);
+                        }
+                    });
                 });
             });
         </script>
+
 </body>
 
 </html>
