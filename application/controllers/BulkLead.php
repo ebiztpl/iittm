@@ -201,6 +201,8 @@ class Bulklead extends CI_Controller
                         'user_mobile'     => $mobile,
                         'course_id'  => $course_id,
                         'login_status' => 3,
+                        'razorpay_trans_id' => 'Bulklead',
+                        'amount' => 0,
                         'created_date' => date('Y-m-d H:i:s')
                     ]);
                     if ($this->db->affected_rows() == 0) {

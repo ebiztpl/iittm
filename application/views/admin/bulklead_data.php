@@ -127,8 +127,7 @@
                                             </td>
 
                                             <td>
-                                                <span><a href="<?php echo site_url(); ?>/admin/show_form_bba/{{list.user_id}}" target="_blank">{{list.first_name}} {{list.middle_name}} <br />{{list.last_name}}</a></span>
-                                                <span><a href="<?php echo site_url(); ?>/admin/show_form_mba/{{list.user_id}}" target="_blank">{{list.first_name}} {{list.middle_name}} <br />{{list.last_name}}</a></span>
+                                                {{list.first_name}} {{list.middle_name}} {{list.last_name}}
                                             </td>
                                             <td><span ng-if="list.course_id==1">BBA</span> <span ng-if="list.course_id==2">MBA</span></td>
                                             <td>{{list.user_mobile}} </td>
