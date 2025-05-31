@@ -220,6 +220,7 @@
                             // Optionally clear form
                             $('#title_select').val('');
                             $('#upload_file').val('');
+                            alert("Data uploaded successfully!");
                         },
                         error: function(xhr) {
                             $('#message').html('<p style="color:red;">Upload failed: ' + xhr.responseText + '</p>');

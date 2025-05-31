@@ -81,7 +81,7 @@ class Bulklead extends CI_Controller
         $output = fopen('php://output', 'w');
 
         // Headers
-        fputcsv($output, ['S.No.', 'First Name', 'Middle Name', 'Last Name', 'Email', 'Mobile', 'DOB', 'Course', 'Father Name', 'Mother Name', 'Gender', 'Religion', 'Category', 'Nationality', 'parma_appertment', 'parma_colony', 'parma_area', 'parma_state', 'parma_city', 'parma_pincode']);
+        fputcsv($output, ['S.No.', 'First Name', 'Middle Name', 'Last Name', 'Email', 'Mobile', 'DOB', 'Course', 'Father Name', 'Mother Name', 'Alternate_mobile', 'Gender', 'Religion', 'Category', 'Nationality', 'Permanent Appartment', 'Permanent Colony', 'Permanent Area', 'Permanent State', 'Permanent City', 'Permanent Pincode', 'Corresponding Appartment', 'Corresponding Colony', 'Corresponding Area', 'Corresponding State', 'Corresponding City', 'Corresponding Pincode', 'Academic Intermediate', 'Academic Board', 'Academic Year', 'Academic Status']);
 
 
         fclose($output);
@@ -120,16 +120,27 @@ class Bulklead extends CI_Controller
                 $course         = isset($data[7]) ? trim($data[7]) : '';
                 $father_name    = isset($data[8]) ? trim($data[8]) : '';
                 $mother_name    = isset($data[9]) ? trim($data[9]) : '';
-                $gender         = isset($data[10]) ? trim($data[10]) : '';
-                $religion       = isset($data[11]) ? trim($data[11]) : '';
-                $category       = isset($data[12]) ? trim($data[12]) : '';
-                $nationality    = isset($data[13]) ? trim($data[13]) : '';
-                $parma_appertment  = isset($data[14]) ? trim($data[14]) : '';
-                $parma_colony   = isset($data[15]) ? trim($data[15]) : '';
-                $parma_area     = isset($data[16]) ? trim($data[16]) : '';
-                $parma_state    = isset($data[17]) ? trim($data[17]) : '';
-                $parma_city     = isset($data[18]) ? trim($data[18]) : '';
-                $parma_pincode  = isset($data[19]) ? trim($data[19]) : '';
+                $father_mobile  = isset($data[10]) ? trim($data[10]) : '';
+                $gender         = isset($data[11]) ? trim($data[11]) : '';
+                $religion       = isset($data[12]) ? trim($data[12]) : '';
+                $category       = isset($data[13]) ? trim($data[13]) : '';
+                $nationality    = isset($data[14]) ? trim($data[14]) : '';
+                $parma_appertment  = isset($data[15]) ? trim($data[15]) : '';
+                $parma_colony   = isset($data[16]) ? trim($data[16]) : '';
+                $parma_area     = isset($data[17]) ? trim($data[17]) : '';
+                $parma_state    = isset($data[18]) ? trim($data[18]) : '';
+                $parma_city     = isset($data[19]) ? trim($data[19]) : '';
+                $parma_pincode  = isset($data[20]) ? trim($data[20]) : '';
+                $corre_appertment  = isset($data[21]) ? trim($data[21]) : '';
+                $corre_colony   = isset($data[22]) ? trim($data[22]) : '';
+                $corre_area     = isset($data[23]) ? trim($data[23]) : '';
+                $corre_state    = isset($data[24]) ? trim($data[24]) : '';
+                $corre_city     = isset($data[25]) ? trim($data[25]) : '';
+                $corre_pincode  = isset($data[26]) ? trim($data[26]) : '';
+                $academic_intermediate  = isset($data[27]) ? trim($data[27]) : '';
+                $academic_board  = isset($data[28]) ? trim($data[28]) : '';
+                $academic_year  = isset($data[29]) ? trim($data[29]) : '';
+                $academic_status  = isset($data[30]) ? trim($data[30]) : '';
 
                 if (empty($first_name) || empty($mobile)) continue;
 
@@ -158,6 +169,15 @@ class Bulklead extends CI_Controller
                 $city = $this->db->get('cities')->row();
                 $parma_city = $city ? $city->id : 0;
 
+                $this->db->where('name', $corre_state);
+                $state = $this->db->get('states')->row();
+                $corre_state = $state ? $state->id : 0;
+
+                // Get city ID
+                $this->db->where('name', $corre_city);
+                $city = $this->db->get('cities')->row();
+                $corre_city = $city ? $city->id : 0;
+
                 // Map course to ID
                 $course_name = strtolower($course);
                 $course_id = 0;
@@ -169,7 +189,7 @@ class Bulklead extends CI_Controller
 
                 // $mobile = $this->db->escape($mobile);
                 $this->db->where("CONVERT(user_mobile USING utf8) =", $mobile);
-                $this->db->where('login_status', 1);
+                $this->db->where('login_status', 2);
                 $user = $this->db->get('user_master')->row();
 
                 if ($user) {
@@ -180,6 +200,9 @@ class Bulklead extends CI_Controller
                     $this->db->insert('user_master', [
                         'user_mobile'     => $mobile,
                         'course_id'  => $course_id,
+                        'login_status' => 3,
+                        'razorpay_trans_id' => 'Bulklead',
+                        'amount' => 0,
                         'created_date' => date('Y-m-d H:i:s')
                     ]);
                     if ($this->db->affected_rows() == 0) {
@@ -202,6 +225,7 @@ class Bulklead extends CI_Controller
                     'course_name'     => $course_id,
                     'father_name'     => $father_name,
                     'mother_name'     => $mother_name,
+                    'father_mobile'   => $father_mobile,
                     'gender'          => $gender,
                     'religion'        => $religion,
                     'category'        => $category,
@@ -212,13 +236,18 @@ class Bulklead extends CI_Controller
                     'parma_state'     => $parma_state,
                     'parma_city'      => $parma_city,
                     'parma_pincode'   => $parma_pincode,
-                    'corre_appertment' => $parma_appertment,
-                    'corre_colony'    => $parma_colony,
-                    'corre_area'      => $parma_area,
-                    'corre_state'     => $parma_state,
-                    'corre_city'      => $parma_city,
-                    'corre_pincode'   => $parma_pincode,
+                    'corre_appertment' => $corre_appertment,
+                    'corre_colony'    => $corre_colony,
+                    'corre_area'      => $corre_area,
+                    'corre_state'     => $corre_state,
+                    'corre_city'      => $corre_city,
+                    'corre_pincode'   => $corre_pincode,
+                    'academic_intermediate'   => $academic_intermediate,
+                    'academic_board'   => $academic_board,
+                    'academic_year'  => $academic_year,
+                    'academic_status'   => $academic_status,
                     'source'          => $title,
+                    'post_date' => date('Y-m-d H:i:s')
                 ]);
                 if ($this->db->affected_rows() == 0) {
                     $error = $this->db->error();
