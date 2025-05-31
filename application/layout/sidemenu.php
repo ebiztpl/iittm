@@ -227,7 +227,7 @@ if ($this->session->userdata['role'] == "telecaller" || $this->session->userdata
 
               <li class="<?php if ($index == 6) echo 'active' ?>"><a href="<?php echo base_url(); ?>index.php/admin/duplicate"><i class="fa fa-angle-double-right"></i>Duplicate Candidate</a></li>
 
-
+              <li class="<?php if ($index == 15) echo 'active' ?>"><a href="<?php echo base_url(); ?>index.php/registration/all_steps"><i class="fa fa-angle-double-right"></i>Admission Process </a></li>
             </ul>
           </li>
 
